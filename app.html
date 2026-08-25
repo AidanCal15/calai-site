@@ -1,0 +1,3509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Stack Navigator & Prompt Builder</title>
+<style>
+
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Baloo+2:wght@500;600;700;800&display=swap');
+  :root{
+    --bg-0:#0f0a1f;
+    --bg-1:#130c25;
+    --bg-2:#1b1233;
+    --teal-1:#ec4899;
+    --teal-2:#8b5cf6;
+    --teal-glow:#a78bfa;
+    --text-0:#f4f0fb;
+    --text-1:#b8b0d0;
+    --text-2:#9089ac;
+    --card:rgba(230,222,250,.02);
+    --card-border:rgba(230,222,250,.09);
+    --surface:rgba(230,222,250,.035);
+    --surface-border:rgba(230,222,250,.12);
+    --surface-hover:rgba(230,222,250,.06);
+    --accent-amber:#b45309;
+    --danger:#e11d48;
+    --radius:18px;
+    --font-display:'Baloo 2','Inter',sans-serif;
+  }
+  *{box-sizing:border-box;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+  @keyframes fadeDown{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  @keyframes drift1{0%,100%{transform:translate(0,0);}50%{transform:translate(60px,-40px);}}
+  @keyframes drift2{0%,100%{transform:translate(0,0);}50%{transform:translate(-50px,50px);}}
+  @keyframes gradientSweep{0%{background-position:0% 50%;}100%{background-position:200% 50%;}}
+  @keyframes glowPulse{
+    0%,100%{box-shadow:0 0 0 0 rgba(236,72,153,.0), 0 8px 30px -8px rgba(236,72,153,.45);}
+    50%{box-shadow:0 0 0 4px rgba(236,72,153,.12), 0 8px 34px -6px rgba(167,139,250,.6);}
+  }
+  @keyframes ringPulse{0%{transform:scale(.8);opacity:.55;}100%{transform:scale(1.8);opacity:0;}}
+
+  html,body{
+    margin:0;padding:0;
+    background:radial-gradient(ellipse 80% 60% at 50% 0%, #1a1140 0%, #0a0715 60%);
+    background-attachment:fixed;
+    color:var(--text-0);
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    position:relative;
+    overflow-x:hidden;
+    letter-spacing:-.006em;
+  }
+  /* subtle fine grid texture, Linear/Vercel-style */
+  html::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    background-image:
+      linear-gradient(rgba(230,222,250,.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(230,222,250,.05) 1px, transparent 1px);
+    background-size:64px 64px;
+    mask-image:radial-gradient(ellipse 80% 60% at 50% 0%, black 10%, transparent 75%);
+    -webkit-mask-image:radial-gradient(ellipse 80% 60% at 50% 0%, black 10%, transparent 75%);
+    pointer-events:none;
+    z-index:-2;
+  }
+  /* grain */
+  html::after{
+    content:"";
+    position:fixed;
+    inset:0;
+    opacity:.035;
+    z-index:-1;
+    pointer-events:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  }
+  body::before,body::after{
+    content:"";
+    position:fixed;
+    border-radius:50%;
+    filter:blur(110px);
+    z-index:-1;
+    pointer-events:none;
+  }
+  body::before{
+    top:-220px;left:-160px;
+    width:560px;height:560px;
+    background:radial-gradient(circle, rgba(236,72,153,.28), transparent 70%);
+    animation:drift1 18s ease-in-out infinite;
+  }
+  body::after{
+    bottom:-240px;right:-180px;
+    width:600px;height:600px;
+    background:radial-gradient(circle, rgba(168,85,247,.18), transparent 70%);
+    animation:drift2 22s ease-in-out infinite;
+  }
+  .wrap{
+    max-width:1080px;
+    margin:0 auto;
+    padding:56px 24px 100px;
+  }
+  header.app-header{
+    text-align:center;
+    margin:-56px calc(50% - 50vw) 6px;
+    width:100vw;
+    padding:64px 24px 36px;
+    position:relative;
+    animation:fadeUp .7s cubic-bezier(.16,1,.3,1) both;
+  }
+  header.app-header .brand-logo{
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    color:#fff;
+    margin-bottom:26px;
+    position:relative;
+    z-index:1;
+  }
+  header.app-header .brand-logo span{
+    font-family:var(--font-display);
+    font-size:28px;
+    font-weight:700;
+    letter-spacing:-.01em;
+  }
+  header.app-header .brand-logo span b{font-weight:800;}
+  header.app-header h1{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:clamp(26px,3.4vw,36px);
+    max-width:640px;
+    margin:0 auto 14px;
+    background:linear-gradient(90deg,#ffffff,#f5d0fe 30%,#ddd6fe 55%,#ffffff 80%,#f5d0fe);
+    background-size:250% auto;
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+    letter-spacing:-.015em;
+    line-height:1.25;
+    animation:gradientSweep 7s linear infinite;
+    position:relative;
+    z-index:1;
+  }
+  header.app-header p{
+    color:rgba(255,255,255,.8);
+    font-size:15.5px;
+    max-width:480px;
+    margin:0 auto;
+    position:relative;
+    z-index:1;
+    line-height:1.6;
+  }
+  .no-friction-row{
+    display:flex;
+    justify-content:center;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-top:20px;
+    position:relative;
+    z-index:1;
+  }
+  .no-friction-item{
+    display:inline-flex;
+    align-items:center;
+    padding:8px 18px;
+    border-radius:999px;
+    background:rgba(255,255,255,.14);
+    border:1px solid rgba(255,255,255,.32);
+    backdrop-filter:blur(8px);
+    color:#fff;
+    font-size:14px;
+    font-weight:600;
+    letter-spacing:.01em;
+    cursor:default;
+    user-select:none;
+  }
+
+  .card{
+    text-align:left;
+    background:var(--bg-1);
+    backdrop-filter:blur(24px) saturate(140%);
+    -webkit-backdrop-filter:blur(24px) saturate(140%);
+    border:1px solid rgba(236,72,153,.16);
+    border-radius:var(--radius);
+    padding:34px;
+    box-shadow:0 24px 60px -20px rgba(0,0,0,.4), 0 0 0 1px rgba(255,255,255,.4) inset;
+    animation:fadeUp .55s cubic-bezier(.16,1,.3,1) both;
+    animation-delay:.08s;
+    transition:transform .3s cubic-bezier(.16,1,.3,1), box-shadow .3s ease, border-color .3s ease;
+  }
+  .card:hover{
+    transform:translateY(-3px);
+    border-color:rgba(236,72,153,.32);
+    box-shadow:0 28px 64px -22px rgba(0,0,0,.45), 0 0 40px -14px rgba(236,72,153,.28), 0 0 0 1px rgba(255,255,255,.4) inset;
+  }
+  .card + .card{margin-top:22px;}
+  #task-box-section .card{max-width:700px;margin-left:auto;margin-right:auto;}
+
+  h2.step-title{
+    font-family:var(--font-display);
+    font-size:15px;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    color:var(--teal-glow);
+    margin:0 0 8px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-weight:700;
+  }
+  h2.step-title .num{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:21px;height:21px;
+    border-radius:50%;
+    background:linear-gradient(135deg, var(--teal-1), var(--teal-2));
+    color:#fff;
+    font-size:11.5px;
+    font-weight:700;
+    box-shadow:0 2px 8px -2px rgba(236,72,153,.7);
+  }
+  .step-desc{font-size:11.5px;color:var(--text-2);text-transform:uppercase;letter-spacing:.05em;font-weight:600;margin:0 0 20px;line-height:1.55;}
+
+  /* The title and the "Go back" button share a row (space-between), but the
+     description paragraph is now a separate full-width block below that
+     row — not squeezed into a narrow column beside the button — so it can
+     wrap using the whole card width instead of stopping wherever the
+     button's column starts. */
+  .task-box-heading{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    flex-wrap:wrap;
+    margin-bottom:8px;
+  }
+  /* The row itself already carries the spacing before the description
+     paragraph (margin-bottom above), so the title's own bottom margin is
+     zeroed here — otherwise that invisible margin throws off
+     align-items:center, making the title look higher than the button. */
+  .task-box-heading h2.step-title{margin:0;}
+
+  .chip-grid{
+    display:flex;flex-wrap:wrap;gap:10px;
+  }
+  .chip{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:10px 17px;
+    border-radius:999px;
+    border:1.5px solid rgba(236,72,153,.16);
+    background:rgba(236,72,153,.045);
+    backdrop-filter:blur(8px);
+    color:var(--text-1);
+    cursor:pointer;
+    font-size:14px;
+    font-weight:600;
+    user-select:none;
+    transition:all .2s cubic-bezier(.16,1,.3,1);
+    animation:fadeUp .45s cubic-bezier(.16,1,.3,1) both;
+  }
+  .chip-grid .chip:nth-child(1){animation-delay:.02s;}
+  .chip-grid .chip:nth-child(2){animation-delay:.06s;}
+  .chip-grid .chip:nth-child(3){animation-delay:.10s;}
+  .chip-grid .chip:nth-child(4){animation-delay:.14s;}
+  .chip-grid .chip:nth-child(5){animation-delay:.18s;}
+  .chip-grid .chip:nth-child(6){animation-delay:.22s;}
+  .chip-grid .chip:nth-child(7){animation-delay:.26s;}
+  .chip:hover{border-color:rgba(94,234,212,.5);color:var(--text-0);background:var(--surface-hover);transform:translateY(-2px);}
+  .chip.selected{
+    background:linear-gradient(135deg, var(--teal-1), var(--teal-2));
+    border-color:transparent;
+    color:#fff;
+    font-weight:600;
+    animation:glowPulse 2.6s ease-in-out infinite;
+  }
+  .chip:active{transform:scale(.97);}
+  .chip input{display:none;}
+
+  label.field-label{
+    display:block;
+    font-size:13px;
+    color:var(--text-1);
+    margin:0 0 8px;
+    font-weight:600;
+  }
+  select, input[type=text], input[type=password]{
+    width:100%;
+    background:var(--surface);
+    border:1px solid var(--surface-border);
+    color:var(--text-0);
+    padding:12px 14px;
+    border-radius:12px;
+    font-family:inherit;
+    font-size:15px;
+    outline:none;
+    transition:border-color .18s ease, box-shadow .18s ease, background .18s ease;
+  }
+  select:focus, input:focus{border-color:var(--teal-glow);box-shadow:0 0 0 4px rgba(167,139,250,.18);background:var(--surface-hover);}
+  .row{display:flex;gap:16px;flex-wrap:wrap;}
+  .row > div{flex:1;min-width:220px;}
+
+  .custom-tool-input{
+    display:flex;gap:8px;margin-top:12px;
+  }
+  .custom-tool-input input{flex:1;}
+  .btn-mini{
+    background:linear-gradient(120deg, rgba(236,72,153,.16), rgba(168,85,247,.14));
+    border:1.5px solid rgba(236,72,153,.4);
+    color:#e9d5ff;
+    padding:9px 19px;border-radius:999px;cursor:pointer;font-size:14px;font-weight:600;
+    transition:background .18s ease, transform .12s ease, box-shadow .18s ease;
+  }
+  .btn-mini:hover{background:linear-gradient(120deg, rgba(236,72,153,.26), rgba(168,85,247,.22));box-shadow:0 6px 16px -8px rgba(236,72,153,.45);transform:translateY(-1px);}
+  .btn-mini:active{transform:scale(.97);}
+
+  .divider{
+    height:1px;background:linear-gradient(90deg, transparent, var(--card-border), transparent);margin:28px 0;
+  }
+
+  .actions{
+    display:flex;gap:12px;flex-wrap:wrap;margin-top:32px;align-items:center;
+  }
+  .btn-primary{
+    position:relative;
+    overflow:hidden;
+    background:linear-gradient(120deg, var(--teal-1), var(--teal-2));
+    background-size:220% auto;
+    color:#fff;
+    border:none;
+    padding:14px 28px;
+    border-radius:999px;
+    font-size:16px;
+    font-weight:700;
+    cursor:pointer;
+    box-shadow:0 14px 34px -10px rgba(236,72,153,.65);
+    transition:transform .18s cubic-bezier(.16,1,.3,1), box-shadow .18s ease, background-position .5s ease;
+  }
+  .btn-primary::before{
+    content:"";
+    position:absolute;
+    top:0;left:-60%;
+    width:40%;height:100%;
+    background:linear-gradient(120deg, transparent, rgba(255,255,255,.55), transparent);
+    transform:skewX(-20deg);
+    transition:left .55s ease;
+    pointer-events:none;
+  }
+  .btn-primary:hover::before{left:130%;}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 18px 42px -8px rgba(167,139,250,.75);background-position:100% 50%;}
+
+  /* Same light-sweep shimmer as the primary "Let's go" button, applied to
+     every chip, the Skip button, and the heading inside the setup modal —
+     only plays on hover, same as the primary button. */
+  #setup-modal .chip,
+  #setup-modal .btn-ghost-mini,
+  #setup-modal h2{
+    position:relative;
+    overflow:hidden;
+  }
+  #setup-modal .chip::before,
+  #setup-modal .btn-ghost-mini::before,
+  #setup-modal h2::before{
+    content:"";
+    position:absolute;
+    top:0;left:-60%;
+    width:40%;height:100%;
+    background:linear-gradient(120deg, transparent, rgba(255,255,255,.85), transparent);
+    transform:skewX(-20deg);
+    transition:left .55s ease;
+    pointer-events:none;
+  }
+  #setup-modal .chip:hover::before,
+  #setup-modal .btn-ghost-mini:hover::before,
+  #setup-modal h2:hover::before{left:130%;}
+  .btn-primary:active{transform:translateY(0) scale(.98);}
+  .btn-primary:disabled{opacity:.45;cursor:not-allowed;transform:none;}
+  .btn-ghost{
+    background:var(--surface);
+    border:1px solid var(--surface-border);
+    color:var(--text-1);
+    padding:14px 24px;
+    border-radius:12px;
+    font-size:14px;
+    font-weight:500;
+    cursor:pointer;
+    transition:color .18s ease, border-color .18s ease, transform .18s ease, background .18s ease;
+  }
+  .btn-ghost:hover{color:var(--text-0);border-color:rgba(94,234,212,.5);background:var(--surface-hover);transform:translateY(-1px);}
+
+  .note{font-size:12.5px;color:var(--text-2);line-height:1.5;margin-top:8px;}
+  .checkbox-row{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:13px;color:var(--text-1);}
+  .checkbox-row input{width:auto;}
+
+  #error-box{
+    display:none;
+    background:rgba(225,29,72,.08);
+    border:1px solid rgba(225,29,72,.35);
+    color:#9f1239;
+    padding:14px 18px;
+    border-radius:12px;
+    font-size:13.5px;
+    margin-top:20px;
+    line-height:1.5;
+    animation:fadeDown .3s ease both;
+  }
+
+  /* loading */
+  #loading{
+    display:none;
+    text-align:center;
+    padding:64px 20px;
+  }
+  .spinner{
+    position:relative;
+    width:42px;height:42px;
+    margin:0 auto 20px;
+    border-radius:50%;
+    border:3px solid rgba(236,72,153,.18);
+    border-top-color:var(--teal-glow);
+    animation:spin .85s linear infinite;
+  }
+  .spinner::after{
+    content:"";
+    position:absolute;
+    inset:-9px;
+    border-radius:50%;
+    border:1px solid rgba(94,234,212,.4);
+    animation:ringPulse 1.6s ease-out infinite;
+  }
+  #loading p{color:var(--text-1);font-size:14px;}
+
+  /* old multi-step wizard — kept in the DOM (unused JS wiring depends on
+     these elements existing) but never shown; the single task box below
+     replaced it as the actual UI. */
+  #form-section{display:none;}
+
+  /* one-time setup popup */
+  #setup-modal{
+    display:none;
+    position:fixed;inset:0;
+    background:rgba(4,4,8,.72);
+    backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);
+    align-items:center;justify-content:center;
+    z-index:200;
+    padding:20px;
+    animation:fadeUp .25s ease both;
+  }
+  #setup-modal .modal-card{
+    background:var(--bg-1);
+    border:1px solid var(--card-border);
+    border-radius:var(--radius);
+    padding:32px;
+    max-width:540px;
+    width:100%;
+    max-height:88vh;
+    overflow-y:auto;
+    box-shadow:0 30px 80px -20px rgba(0,0,0,.65);
+    animation:fadeUp .35s cubic-bezier(.16,1,.3,1) both;
+  }
+
+  /* access gate — full-screen paywall shown before anything else loads */
+  #access-gate{
+    display:none;
+    position:fixed;inset:0;
+    z-index:1000;
+    align-items:center;justify-content:center;
+    padding:20px;
+    background:radial-gradient(ellipse 80% 60% at 50% 0%, #1a1140 0%, #0a0715 60%);
+  }
+  .access-gate-card{
+    background:var(--bg-1);
+    border:1px solid var(--card-border);
+    border-radius:var(--radius);
+    padding:40px 36px;
+    max-width:420px;
+    width:100%;
+    text-align:center;
+    box-shadow:0 30px 80px -20px rgba(0,0,0,.5);
+    animation:fadeUp .45s cubic-bezier(.16,1,.3,1) both;
+  }
+  .access-gate-logo{
+    display:inline-flex;
+    align-items:center;justify-content:center;
+    width:64px;height:64px;
+    border-radius:50%;
+    background:linear-gradient(120deg, var(--teal-1), var(--teal-2));
+    margin:0 auto 18px;
+    box-shadow:0 14px 34px -10px rgba(236,72,153,.55);
+  }
+  .access-gate-card h1{
+    margin:0 0 8px;
+    font-family:var(--font-display);
+    font-size:22px;
+    font-weight:700;
+    color:var(--text-0);
+    letter-spacing:-.01em;
+  }
+  .access-gate-card > p{
+    margin:0 0 24px;
+    color:var(--text-1);
+    font-size:14.5px;
+    line-height:1.55;
+  }
+  #access-gate-form{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+  #access-gate-form input[type=text]{
+    text-align:center;
+    letter-spacing:.02em;
+  }
+  #access-gate-form .btn-primary{width:100%;}
+  #access-gate-form .btn-primary:disabled{opacity:.6;cursor:wait;}
+  .access-gate-error{
+    margin:16px 0 0;
+    color:var(--danger);
+    font-size:13px;
+    font-weight:600;
+    line-height:1.5;
+  }
+  .access-gate-contact{
+    margin:20px 0 0;
+    padding-top:18px;
+    border-top:1px solid var(--card-border);
+    color:var(--text-2);
+    font-size:12.5px;
+  }
+  .access-gate-contact a{color:var(--teal-1);font-weight:600;text-decoration:none;}
+  .access-gate-contact a:hover{text-decoration:underline;}
+
+  /* tree */
+  #tree-section{display:none;}
+  .tree-header{
+    display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:28px;
+  }
+  .tree-header h2{
+    margin:0 0 6px;font-size:22px;color:var(--text-0);font-weight:700;letter-spacing:-.02em;
+  }
+  .tree-header p{margin:0;color:var(--text-1);font-size:14px;}
+  .legend{display:flex;gap:10px;flex-wrap:wrap;}
+  .legend-item{
+    display:flex;align-items:center;gap:6px;
+    font-size:12px;color:var(--text-1);
+    background:rgba(230,222,250,.04);
+    border:1px solid var(--card-border);
+    padding:5px 11px;border-radius:999px;
+  }
+  .legend-dot{width:9px;height:9px;border-radius:50%;}
+
+  ul.tree, ul.tree ul{
+    list-style:none;
+    margin:0;padding:0 0 0 28px;
+    position:relative;
+  }
+  ul.tree{padding-left:0;}
+  ul.tree ul{
+    padding-left:26px;
+    border-left:1px dashed var(--card-border);
+    margin-top:6px;
+    animation:fadeDown .3s cubic-bezier(.16,1,.3,1) both;
+  }
+  ul.tree li{
+    position:relative;
+    margin:8px 0;
+  }
+  ul.tree ul li::before{
+    content:"";
+    position:absolute;
+    left:-26px;top:18px;
+    width:22px;height:1px;
+    border-top:1px dashed var(--card-border);
+  }
+
+  .node{
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    padding:11px 16px;
+    border-radius:12px;
+    background:var(--surface);
+    backdrop-filter:blur(6px);
+    border:1px solid var(--surface-border);
+    cursor:pointer;
+    font-size:14.5px;
+    color:var(--text-0);
+    font-weight:500;
+    transition:all .2s ease;
+    max-width:100%;
+  }
+  .node:hover{border-color:rgba(94,234,212,.5);background:var(--surface-hover);transform:translateX(3px);}
+  .node .caret{
+    color:var(--teal-glow);
+    font-size:11px;
+    transition:transform .18s ease;
+    flex-shrink:0;
+  }
+  .node.expanded .caret{transform:rotate(90deg);}
+  .node.root-node{
+    background:linear-gradient(135deg, rgba(236,72,153,.28), rgba(167,139,250,.12));
+    border-color:rgba(94,234,212,.4);
+    font-weight:700;
+    font-size:16.5px;
+    letter-spacing:-.01em;
+    cursor:default;
+  }
+  .node.root-node .caret{display:none;}
+
+  .leaf{
+    display:flex;
+    align-items:flex-start;
+    gap:12px;
+    padding:15px 18px;
+    border-radius:14px;
+    background:rgba(230,222,250,.025);
+    border:1px solid var(--card-border);
+    max-width:520px;
+    animation:fadeUp .4s cubic-bezier(.16,1,.3,1) both;
+    transition:border-color .18s ease, transform .18s ease, box-shadow .18s ease;
+  }
+  .leaf:hover{border-color:rgba(236,72,153,.22);transform:translateY(-1px);box-shadow:0 10px 26px -14px rgba(8,46,48,.14);}
+  .leaf .tool-badge{
+    flex-shrink:0;
+    width:34px;height:34px;
+    border-radius:10px;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:800;
+    font-size:13px;
+    color:#0a0a0f;
+    box-shadow:0 4px 14px -4px rgba(8,46,48,.3);
+  }
+  .leaf .leaf-body strong{display:block;font-size:14.5px;color:var(--text-0);margin-bottom:3px;font-weight:600;}
+  .leaf .leaf-body span{font-size:13px;color:var(--text-1);line-height:1.5;display:block;}
+
+  .leaf-wrap{max-width:560px;margin:0 auto;}
+  .btn-prompt{
+    margin-top:8px;
+    background:none;
+    border:none;
+    color:var(--teal-glow);
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    padding:4px 2px;
+  }
+  .btn-prompt:hover{text-decoration:underline;}
+  .prompt-panel{
+    margin-top:10px;
+    padding:16px;
+    border-radius:14px;
+    background:rgba(230,222,250,.035);
+    backdrop-filter:blur(10px);
+    border:1px solid var(--card-border);
+    animation:fadeDown .3s cubic-bezier(.16,1,.3,1) both;
+  }
+  .prompt-tip{
+    margin:0;
+    padding:12px 14px;
+    border-radius:10px;
+    background:rgba(180,83,9,.07);
+    border:1px solid rgba(180,83,9,.22);
+    font-size:12.5px;
+    color:var(--text-1);
+    line-height:1.5;
+  }
+  .prompt-text{
+    width:100%;
+    background:var(--surface);
+    border:1px solid var(--surface-border);
+    color:var(--text-0);
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:12.5px;
+    line-height:1.55;
+    padding:12px;
+    border-radius:10px;
+    resize:vertical;
+  }
+  .prompt-actions{margin-top:0;display:flex;gap:8px;}
+  .prompt-result{display:flex;flex-direction:column;gap:24px;}
+  .prompt-result > .note{margin-top:0;}
+
+  .prompt-form .field-label{margin-top:14px;}
+  .prompt-form .field-label:first-child{margin-top:0;}
+  .prompt-input{
+    width:100%;
+    background:var(--surface);
+    border:1px solid var(--surface-border);
+    color:var(--text-0);
+    font-family:inherit;
+    font-size:13.5px;
+    line-height:1.5;
+    padding:10px 12px;
+    border-radius:10px;
+    resize:vertical;
+    outline:none;
+    transition:border-color .18s ease, box-shadow .18s ease, background .18s ease;
+  }
+  .prompt-input:focus{border-color:var(--teal-glow);box-shadow:0 0 0 3px rgba(167,139,250,.15);background:var(--surface-hover);}
+  .prompt-error{color:var(--danger);font-size:12.5px;margin:10px 0 0;}
+
+  .strength-meter{margin-top:12px;}
+  .strength-row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px;}
+  .strength-label{font-size:11.5px;color:var(--text-2);text-transform:uppercase;letter-spacing:.05em;font-weight:600;}
+  .strength-status{font-size:12px;font-weight:600;transition:color .2s ease;}
+  .strength-status.strength-weak{color:#f87171;}
+  .strength-status.strength-ok{color:#fbbf24;}
+  .strength-status.strength-strong{color:#4ade80;}
+  .strength-status.strength-perfect{color:#4ade80;}
+  /* Smooth pill bar whose gradient is "revealed" as it fills, rather than
+     recolored in flat blocks — red only shows at low strength, green only
+     appears once the bar has actually grown that far. The gradient's
+     background-size is kept in sync with the track's real pixel width (via
+     JS) so the reveal lines up correctly instead of restretching a full
+     red-to-green gradient across whatever short width the bar currently is. */
+  .strength-track{
+    height:14px;
+    border-radius:999px;
+    background:var(--surface);
+    overflow:hidden;
+  }
+  .strength-fill{
+    height:100%;
+    border-radius:999px;
+    width:6%;
+    background:linear-gradient(90deg, #ef4444, #f97316, #eab308, #84cc16, #22c55e);
+    background-size:640px 100%;
+    transition:width .3s cubic-bezier(.16,1,.3,1);
+  }
+
+  .prompt-form .btn-mini{margin-top:18px;}
+  .prompt-form > .btn-primary{margin-top:20px;}
+  .prompt-form > details.optional-details{margin-bottom:4px;}
+  .btn-ghost-mini{
+    background:rgba(236,72,153,.06);
+    border:1.5px solid rgba(236,72,153,.22);
+    color:#e9d5ff;
+    padding:7px 15px;
+    border-radius:999px;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    transition:color .15s ease, border-color .15s ease, background .15s ease, transform .12s ease;
+  }
+  /* Plain text link, not a button — sits below the card on the page's own
+     gradient background, so it's styled like the footer links (white,
+     underlined) rather than a bordered pill. */
+  .btn-edit-setup{
+    display:block;
+    background:none;
+    border:none;
+    box-shadow:none;
+    margin:16px auto 0;
+    color:#fff;
+    text-decoration:underline;
+    text-underline-offset:2px;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    opacity:.85;
+    transition:opacity .15s ease;
+  }
+  .btn-edit-setup:hover{opacity:1;}
+  #task-box-section{text-align:center;}
+  /* Small round icon-only button, inset into the bottom-right corner of
+     the describe textarea (see .describe-input-wrap below) instead of a
+     labeled pill sitting underneath it. resize:none because the browser's
+     native resize grip lives in that same corner and would fight the
+     button; padding-right keeps typed text from running under it. */
+  .describe-input-wrap{position:relative;}
+  .describe-input-wrap textarea.prompt-input{resize:none;padding-right:44px;}
+  .describe-input-wrap textarea.prompt-input::placeholder{font-size:11.5px;color:var(--text-2);text-transform:uppercase;letter-spacing:.05em;font-weight:600;}
+  .btn-mic{
+    position:absolute;
+    right:10px;
+    bottom:10px;
+    display:inline-flex;align-items:center;justify-content:center;
+    width:34px;
+    height:34px;
+    background:var(--bg-1);
+    border:1.5px solid rgba(236,72,153,.3);
+    color:#e9d5ff;
+    padding:0;
+    border-radius:50%;
+    cursor:pointer;
+    box-shadow:0 2px 8px rgba(236,72,153,.18);
+    transition:transform .18s cubic-bezier(.16,1,.3,1), box-shadow .18s ease, background .18s ease, border-color .18s ease;
+  }
+  .btn-mic:hover{
+    transform:scale(1.06);
+    box-shadow:0 6px 14px rgba(236,72,153,.3);
+    border-color:rgba(236,72,153,.55);
+  }
+  .btn-mic:active{transform:scale(.94);}
+  .btn-mic .mic-icon{width:16px;height:16px;display:inline-block;}
+  .btn-mic .mic-icon svg{width:100%;height:100%;display:block;}
+  .btn-mic.btn-mic-listening{
+    background:#fee2e2;
+    border-color:rgba(225,29,72,.5);
+    color:#be123c;
+  }
+  .btn-mic.btn-mic-listening .mic-icon{animation:micPulse 1s ease-in-out infinite;}
+  @keyframes micPulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(1.25);}}
+  .btn-ghost-mini:hover{color:#e9d5ff;border-color:rgba(236,72,153,.4);background:rgba(236,72,153,.12);transform:translateY(-1px);}
+
+  .dropzone{
+    margin-top:10px;
+    border:1.5px dashed var(--surface-border);
+    border-radius:14px;
+    padding:16px;
+    text-align:center;
+    cursor:pointer;
+    background:var(--surface);
+    transition:all .2s ease;
+  }
+  .dropzone:hover, .dropzone.dragover{
+    border-color:var(--teal-glow);
+    background:rgba(167,139,250,.12);
+  }
+  .dropzone span{display:block;font-size:12.5px;color:var(--text-1);}
+  .dropzone .dropzone-sub{font-size:11px;color:var(--text-2);margin-top:4px;}
+  .dropzone u{color:var(--teal-glow);text-decoration:none;}
+
+  .file-chip-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;}
+  .file-chip{
+    display:inline-flex;align-items:center;gap:6px;
+    background:rgba(236,72,153,.16);
+    border:1px solid var(--card-border);
+    color:var(--text-1);
+    font-size:12px;
+    padding:4px 9px;
+    border-radius:999px;
+    animation:fadeUp .25s ease both;
+  }
+  .file-chip.unsupported{background:rgba(251,113,133,.1);}
+  .file-chip i{font-style:normal;color:var(--text-2);}
+  .file-chip button{
+    background:none;border:none;color:var(--text-2);cursor:pointer;font-size:13px;line-height:1;padding:0;
+  }
+  .file-chip button:hover{color:var(--danger);}
+
+  .dynamic-intro{
+    border-style:dashed;
+    cursor:pointer;
+    position:relative;
+    padding-right:40px;
+    background:rgba(230,222,250,.03);
+    transition:border-color .18s ease, background .18s ease;
+  }
+  .dynamic-intro:hover{border-color:var(--teal-glow);background:rgba(167,139,250,.12);}
+  .dynamic-intro::after{
+    content:"▶";
+    position:absolute;
+    right:16px;
+    top:50%;
+    transform:translateY(-50%);
+    color:var(--teal-glow);
+    font-size:11px;
+    transition:transform .18s ease;
+  }
+  .dynamic-intro.expanded::after{transform:translateY(-50%) rotate(90deg);}
+
+  footer.app-footer{
+    text-align:center;margin-top:42px;color:rgba(255,255,255,.75);font-size:12.5px;
+  }
+  footer.app-footer a{color:#fff;text-decoration:underline;text-underline-offset:2px;}
+
+  ::selection{background:rgba(167,139,250,.4);}
+
+  .sensitivity-note{
+    margin-top:10px;
+    padding:10px 12px;
+    border-radius:10px;
+    background:rgba(251,191,36,.08);
+    border:1px solid rgba(251,191,36,.28);
+    color:var(--accent-amber);
+    font-size:12px;
+    line-height:1.55;
+  }
+  .sensitivity-note b{color:var(--accent-amber);}
+
+  .node:focus-visible, .dynamic-intro:focus-visible{
+    outline:2px solid var(--teal-glow);
+    outline-offset:2px;
+  }
+
+  details.optional-details{margin-top:16px;}
+  details.optional-details summary{
+    cursor:pointer;
+    list-style:none;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin:0;
+    padding:12px 14px;
+    border-radius:14px;
+    background:rgba(236,72,153,.05);
+    border:1.5px solid rgba(236,72,153,.16);
+    transition:background .18s ease, border-color .18s ease;
+    user-select:none;
+  }
+  details.optional-details summary:hover{background:rgba(236,72,153,.09);border-color:rgba(236,72,153,.28);}
+  details.optional-details summary::-webkit-details-marker{display:none;}
+  .optional-summary-icon{width:17px;height:17px;flex-shrink:0;color:var(--text-1);display:inline-flex;}
+  .optional-summary-icon svg{width:100%;height:100%;}
+  .optional-summary-text{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0;}
+  .optional-summary-title{font-size:11.5px;color:var(--text-2);text-transform:uppercase;letter-spacing:.05em;font-weight:600;}
+  /* Description now shows as a hover tooltip instead of a permanent second
+     line — keeps the summary row to one short line, detail still available
+     on hover for anyone curious. */
+  .optional-summary-title-wrap{position:relative;display:inline-block;}
+  .optional-summary-tooltip{
+    position:absolute;
+    left:0;
+    top:calc(100% + 9px);
+    max-width:230px;
+    background:#1f2937;
+    color:#f9fafb;
+    font-size:12px;
+    font-weight:500;
+    line-height:1.45;
+    padding:8px 11px;
+    border-radius:8px;
+    box-shadow:0 10px 24px -8px rgba(0,0,0,.4);
+    opacity:0;
+    visibility:hidden;
+    transform:translateY(-4px);
+    transition:opacity .15s ease, transform .15s ease, visibility .15s;
+    z-index:20;
+    pointer-events:none;
+  }
+  .optional-summary-tooltip::before{
+    content:"";
+    position:absolute;
+    bottom:100%;
+    left:14px;
+    border:5px solid transparent;
+    border-bottom-color:#1f2937;
+  }
+  .optional-summary-title-wrap:hover .optional-summary-tooltip,
+  .optional-summary-title-wrap:focus-visible .optional-summary-tooltip{
+    opacity:1;
+    visibility:visible;
+    transform:translateY(0);
+  }
+  .optional-summary-chevron{
+    font-size:12px;
+    color:var(--teal-glow);
+    transition:transform .18s ease;
+    flex-shrink:0;
+  }
+  details.optional-details[open] .optional-summary-chevron{transform:rotate(180deg);}
+  details.optional-details summary:focus-visible{outline:2px solid var(--teal-glow);outline-offset:3px;}
+  details.optional-details .optional-details-content{
+    margin-top:14px;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    animation:fadeDown .25s cubic-bezier(.16,1,.3,1) both;
+  }
+  details.optional-details .optional-details-content .field-label{margin:0 0 8px;}
+
+  #print-date{font-size:12px;color:var(--text-2);margin:2px 0 0;}
+
+  @media print{
+    html::before, html::after, body::before, body::after{display:none !important;}
+    header.app-header p, .no-friction-row, #form-section, #loading, .actions, .btn-prompt,
+    .prompt-panel, .prompt-form, .prompt-result, .dynamic-intro{
+      display:none !important;
+    }
+    @page{margin:1.4cm;}
+    body{background:#fff !important;color:#111 !important;}
+    .wrap{max-width:100%;padding:12px;}
+    header.app-header .brand-logo{color:#333 !important;}
+    header.app-header .brand-logo svg path{stroke:#333 !important;}
+    header.app-header h1{
+      background:none !important;
+      -webkit-text-fill-color:#111 !important;
+      color:#111 !important;
+      animation:none !important;
+    }
+    .card{
+      background:#fff !important;
+      box-shadow:none !important;
+      border:1px solid #ccc !important;
+      backdrop-filter:none !important;
+    }
+    .tree-header h2, #tree-title{color:#111 !important;}
+    .tree-header p, #tree-subtitle{color:#444 !important;}
+    #print-date{display:block !important;color:#666 !important;}
+    ul.tree ul{display:block !important;border-left:1px dashed #ccc !important;}
+    .node{background:#f5f5f5 !important;border:1px solid #ddd !important;color:#111 !important;}
+    .node .caret{display:none !important;}
+    .leaf{background:#fafafa !important;border:1px solid #ddd !important;box-shadow:none !important;}
+    .leaf-body strong, .leaf-body span{color:#111 !important;}
+    .legend-item{background:#f5f5f5 !important;border:1px solid #ddd !important;color:#333 !important;}
+    .sensitivity-note{background:#fff8e6 !important;border:1px solid #f0d99a !important;color:#7a4b00 !important;}
+    .sensitivity-note b{color:#7a4b00 !important;}
+    footer.app-footer{color:#666 !important;}
+  }
+
+</style>
+</head>
+<body>
+
+<!-- Access gate — shown before anything else loads. This is a soft,
+     client-side speed bump (the page is a static file, so anyone who opens
+     devtools can technically bypass it or read the password hash) — not a
+     real security boundary against someone determined — but the actual check
+     now happens server-side (see netlify/functions/verify-license.js), which
+     verifies the key against Gumroad directly. Unlocking is remembered
+     per-browser via localStorage and silently re-checked about once a month,
+     so a paying customer only has to type their key again if that recheck
+     fails (e.g. they got a refund). -->
+<div id="access-gate">
+  <div class="access-gate-card">
+    <div class="access-gate-logo">
+      <svg viewBox="16 16 68 68" width="40" height="40" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M62 23c-15 0-15 13.5 0 13.5S77 50 62 50H38c-15 0-15 13.5 0 13.5S53 77 38 77"
+              fill="none" stroke="#ffffff" stroke-width="10" stroke-linecap="round"/>
+        <path d="M38 23c15 0 15 13.5 0 13.5S23 50 38 50h24c15 0 15 13.5 0 13.5S47 77 62 77"
+              fill="none" stroke="#ffffff" stroke-width="10" stroke-linecap="round" opacity=".55"/>
+      </svg>
+    </div>
+    <h1>This is a paid tool</h1>
+    <p>Enter the license key from your purchase confirmation email to continue.</p>
+    <form id="access-gate-form">
+      <input type="text" id="access-gate-input" placeholder="License key" autocomplete="off" autofocus>
+      <button type="submit" class="btn-primary" id="access-gate-submit">Unlock →</button>
+    </form>
+    <p class="access-gate-error" id="access-gate-error" style="display:none;">That key isn't valid — double check the email you got after purchase.</p>
+    <p class="access-gate-contact">Don't have a key yet? <a href="mailto:info@calaisolutions.com">info@calaisolutions.com</a></p>
+  </div>
+</div>
+
+<!-- Friendly one-time setup popup — shown right away on first visit, never
+     again after it's been completed or skipped, reopenable any time via the
+     "Edit" link on the main page. -->
+<div id="setup-modal" class="modal-backdrop">
+  <div class="modal-card">
+    <h2 style="margin:0 0 8px;font-size:22px;font-weight:800;color:var(--text-0);">Quick setup before you start</h2>
+    <p style="margin:0 0 24px;color:var(--text-1);font-size:14px;line-height:1.55;">Takes about 10 seconds. We'll use this to recommend the right AI tool and tailor every prompt to your industry and role — you'll only see this once.</p>
+
+    <label class="field-label">Which AI tools do you/your team use?</label>
+    <div class="chip-grid" id="tools-grid">
+      <label class="chip"><input type="checkbox" value="Claude"> Claude</label>
+      <label class="chip"><input type="checkbox" value="ChatGPT"> ChatGPT</label>
+      <label class="chip"><input type="checkbox" value="Microsoft Copilot"> Microsoft Copilot</label>
+      <label class="chip"><input type="checkbox" value="Perplexity"> Perplexity</label>
+      <label class="chip"><input type="checkbox" value="Gemini"> Gemini</label>
+      <button class="chip" type="button" id="tools-other-btn">Other</button>
+    </div>
+    <div class="custom-tool-input" id="custom-tool-wrap" style="display:none;">
+      <input type="text" id="custom-tool" placeholder="Add another tool (e.g. Midjourney, Cursor)">
+      <button class="btn-mini" type="button" onclick="addCustomTool()">Add</button>
+    </div>
+
+    <div class="row" style="margin-top:16px;">
+      <div>
+        <label class="field-label">Industry</label>
+        <select id="industry-select">
+          <option value="">Select an industry…</option>
+          <option>Law</option>
+          <option>Marketing</option>
+          <option>Healthcare</option>
+          <option>Finance</option>
+          <option>Technology / Software</option>
+          <option>Consulting</option>
+          <option>Education</option>
+          <option>Retail / E-commerce</option>
+          <option value="__other">Other…</option>
+        </select>
+      </div>
+      <div id="industry-other-wrap" style="display:none;">
+        <label class="field-label" style="visibility:hidden;" aria-hidden="true">Industry</label>
+        <input type="text" id="industry-other" placeholder="Type your industry">
+      </div>
+    </div>
+
+    <label class="field-label" style="margin-top:16px;display:block;">Your role <span style="color:var(--text-2);font-weight:400;">(optional)</span></label>
+    <div class="chip-grid" id="roles-grid">
+      <label class="chip"><input type="checkbox" value="Writers"> Writers</label>
+      <label class="chip"><input type="checkbox" value="Lawyers"> Lawyers</label>
+      <label class="chip"><input type="checkbox" value="Analysts"> Analysts</label>
+      <label class="chip"><input type="checkbox" value="Developers"> Developers</label>
+      <label class="chip"><input type="checkbox" value="Marketers"> Marketers</label>
+      <label class="chip"><input type="checkbox" value="Support / CS"> Support / CS</label>
+      <label class="chip"><input type="checkbox" value="Sales"> Sales</label>
+      <button class="chip" type="button" id="roles-other-btn">Other</button>
+    </div>
+    <div class="custom-tool-input" id="custom-role-wrap" style="display:none;">
+      <input type="text" id="custom-role" placeholder="Add another role (e.g. Recruiters, Product)">
+      <button class="btn-mini" type="button" onclick="addCustomRole()">Add</button>
+    </div>
+
+    <p id="setup-modal-error" class="prompt-error" style="display:none;margin-top:14px;"></p>
+
+    <div style="display:flex;align-items:center;gap:18px;margin-top:26px;flex-wrap:wrap;">
+      <button class="btn-primary" type="button" id="setup-modal-continue">Let's go →</button>
+      <button class="btn-ghost-mini" type="button" id="setup-modal-skip">Skip for now</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap" id="app-wrap" style="display:none;">
+
+  <header class="app-header">
+    <div class="brand-logo">
+      <svg viewBox="16 16 68 68" width="48" height="48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M62 23c-15 0-15 13.5 0 13.5S77 50 62 50H38c-15 0-15 13.5 0 13.5S53 77 38 77"
+              fill="none" stroke="#ffffff" stroke-width="10" stroke-linecap="round"/>
+        <path d="M38 23c15 0 15 13.5 0 13.5S23 50 38 50h24c15 0 15 13.5 0 13.5S47 77 62 77"
+              fill="none" stroke="#ffffff" stroke-width="10" stroke-linecap="round" opacity=".55"/>
+      </svg>
+      <span>Cal<b>AI</b></span>
+    </div>
+    <h1>Your Personal AI Playbook</h1>
+    <p>Whether your team has one AI tool or five, this turns "what do I even type?" into a two-click answer: the right tool for the task, plus a ready-to-use prompt.</p>
+    <div class="no-friction-row">
+      <span class="no-friction-item">No account</span>
+      <span class="no-friction-item">No sign-up</span>
+      <span class="no-friction-item">No API key</span>
+    </div>
+  </header>
+
+  <!-- FORM -->
+  <div id="task-box-section">
+    <div class="card">
+      <div id="task-box-mount"></div>
+    </div>
+    <button class="btn-edit-setup" type="button" id="setup-edit-btn" style="display:none;">← Edit tools/industry/role</button>
+  </div>
+
+  <div id="form-section">
+    <div id="error-box"></div>
+    <div class="actions">
+      <button class="btn-primary" id="generate-btn" onclick="generateTree()">Generate My AI Stack Map →</button>
+      <button class="btn-ghost" onclick="loadExample()">See an example</button>
+    </div>
+  </div>
+
+  <!-- LOADING -->
+  <div id="loading">
+    <div class="spinner"></div>
+    <p>Mapping your team's tasks to the right tools…</p>
+  </div>
+
+  <!-- TREE -->
+  <div id="tree-section">
+    <div class="card">
+      <div class="tree-header">
+        <div>
+          <h2 id="tree-title">Your AI Stack Map</h2>
+          <p id="tree-subtitle"></p>
+          <p id="print-date" style="display:none;"></p>
+        </div>
+        <div class="legend" id="legend"></div>
+      </div>
+      <div id="tree-root"></div>
+      <div class="actions">
+        <button class="btn-ghost" onclick="window.print()">Print / Save as PDF</button>
+        <button class="btn-ghost" onclick="exportTreeAsText()">Download as text</button>
+        <button class="btn-ghost" onclick="startOver()">← Start over</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="app-footer">
+    AI Stack Navigator & Prompt Builder · Recommendations current as of <span id="recs-updated"></span> · Runs fully client-side — nothing leaves your browser
+  </footer>
+</div>
+
+<script>
+// =====================================================================
+// CLIENT CONFIG — edit this block before sending a copy to a client.
+// Leave everything blank/empty/false to keep the generic, self-serve
+// version (client fills out the form themselves).
+// =====================================================================
+const CLIENT_CONFIG = {
+  clientName: "",        // e.g. "Acme Law Group" — updates the header blurb if set
+  accentColor: "",       // e.g. "#0d9488" — leave blank to keep the default teal
+  tools: [],              // e.g. ["Claude", "ChatGPT", "Microsoft Copilot"] — pre-selects these
+  industry: "",           // must exactly match a dropdown option (e.g. "Law"), or leave blank
+  industryOther: "",      // used only if industry isn't one of the dropdown options
+  roles: [],              // e.g. ["Lawyers", "Writers"] — pre-selects these
+  autoGenerate: false     // set true to skip the form and land straight on their map
+};
+// =====================================================================
+
+// =====================================================================
+// ACCESS GATE — real accounts without building real accounts. Each buyer
+// gets a unique license key automatically from Gumroad at checkout. The key
+// they type gets verified against Gumroad's API server-side, via the
+// Netlify function at netlify/functions/verify-license.js — that's the file
+// to edit to set your Gumroad Product ID and activation limit. This file
+// never contains anything a visitor could read to grant themselves access.
+// =====================================================================
+
+(function(){
+  const ACCESS_STORAGE_KEY = "calai.access.unlocked";
+  // How often a remembered unlock gets silently re-checked against Gumroad
+  // (catches refunds/chargebacks). Customers only have to retype their key
+  // if that recheck fails — otherwise about once a month, invisibly.
+  const ACCESS_RECHECK_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+  const VERIFY_URL = '/.netlify/functions/verify-license';
+
+  const gate = document.getElementById('access-gate');
+  const appWrap = document.getElementById('app-wrap');
+  const gateForm = document.getElementById('access-gate-form');
+  const gateInput = document.getElementById('access-gate-input');
+  const gateError = document.getElementById('access-gate-error');
+  const gateSubmit = document.getElementById('access-gate-submit');
+
+  function showApp(){
+    if(gate) gate.style.display = 'none';
+    if(appWrap) appWrap.style.display = '';
+  }
+  function showGate(){
+    if(gate) gate.style.display = 'flex';
+    if(appWrap) appWrap.style.display = 'none';
+  }
+  function remember(licenseKey){
+    try{ localStorage.setItem(ACCESS_STORAGE_KEY, JSON.stringify({ licenseKey, verifiedAt: Date.now() })); }catch(e){ /* ignore */ }
+  }
+  function forget(){
+    try{ localStorage.removeItem(ACCESS_STORAGE_KEY); }catch(e){ /* ignore */ }
+  }
+
+  async function verifyKey(licenseKey){
+    try{
+      const resp = await fetch(VERIFY_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ licenseKey })
+      });
+      const data = await resp.json();
+      return !!data.valid;
+    }catch(e){
+      return null; // network/server issue — distinct from "invalid key"
+    }
+  }
+
+  let saved = null;
+  try{
+    const raw = localStorage.getItem(ACCESS_STORAGE_KEY);
+    if(raw) saved = JSON.parse(raw);
+  }catch(e){ /* ignore */ }
+
+  if(saved && saved.licenseKey && typeof saved.verifiedAt === 'number' && (Date.now() - saved.verifiedAt) < ACCESS_RECHECK_MS){
+    // Recently verified — trust it for now, no network call needed.
+    showApp();
+  } else if(saved && saved.licenseKey){
+    // Due for a recheck. Show the app immediately (don't make a paying
+    // customer stare at a lock screen while we double-check them), then
+    // silently confirm in the background; only kick them back to the gate
+    // if the key no longer checks out.
+    showApp();
+    verifyKey(saved.licenseKey).then(valid => {
+      if(valid === true){
+        remember(saved.licenseKey);
+      } else if(valid === false){
+        forget();
+        showGate();
+      }
+      // valid === null (network error): leave them be, try again next load.
+    });
+  } else {
+    showGate();
+  }
+
+  if(gateForm){
+    gateForm.addEventListener('submit', async function(e){
+      e.preventDefault();
+      const entered = (gateInput && gateInput.value || '').trim();
+      if(!entered) return;
+      if(gateError) gateError.style.display = 'none';
+      if(gateSubmit){ gateSubmit.disabled = true; gateSubmit.textContent = 'Checking…'; }
+
+      const valid = await verifyKey(entered);
+
+      if(gateSubmit){ gateSubmit.disabled = false; gateSubmit.textContent = 'Unlock →'; }
+
+      if(valid === true){
+        remember(entered);
+        showApp();
+      } else {
+        if(gateError){
+          gateError.textContent = valid === null
+            ? "Couldn't reach the verification service — check your connection and try again."
+            : "That key isn't valid — double check the email you got after purchase.";
+          gateError.style.display = 'block';
+        }
+        if(gateInput) gateInput.focus();
+      }
+    });
+  }
+})();
+
+// When these recommendations were last reviewed — tool capabilities shift
+// over time, so this keeps the map's advice honestly dated rather than
+// implying it's permanently current.
+const RECS_UPDATED = "August 2026";
+
+// Webhook for the "Something else" free-text box only. Everything else on
+// this page runs on the local rules engine below and never calls this —
+// this URL just gets a short classification (one of TASK_META's keys) back
+// for genuinely open-ended descriptions the local keyword matcher can't
+// confidently place. If the request fails or times out for any reason, the
+// caller falls straight back to the local classifier — the page never
+// depends on this being reachable.
+const AI_CLASSIFY_WEBHOOK_URL = "https://hook.us2.make.com/uj6ybkypigoh752jjpu5374nc12i9i8q";
+
+// Runs automatically on every generated prompt to write a genuinely
+// tailored version instead of the local template's fill-in-the-blanks
+// version. Falls back to the local version silently if this fails.
+const AI_ENHANCE_WEBHOOK_URL = "https://hook.us2.make.com/6nqa4v6wnrnyddh3ecmjs9m14y298u4f";
+
+const TOOL_COLORS = {
+  "claude": "#d97757",
+  "chatgpt": "#10a37f",
+  "microsoft copilot": "#3b82f6",
+  "copilot": "#3b82f6",
+  "perplexity": "#8b5cf6",
+  "gemini": "#f5a524",
+  "default": "#5eead4"
+};
+
+function toolColor(name){
+  const key = (name||"").toLowerCase().trim();
+  return TOOL_COLORS[key] || TOOL_COLORS.default;
+}
+
+// Direct links to each tool so people can jump straight there after
+// copying the prompt. Anything not in the map (a custom "Other" tool
+// someone typed in) falls back to a Google search for that tool's name —
+// still one click closer than making them look it up themselves.
+const TOOL_URLS = {
+  "claude": "https://claude.ai/new",
+  "chatgpt": "https://chatgpt.com/",
+  "microsoft copilot": "https://copilot.microsoft.com/",
+  "copilot": "https://copilot.microsoft.com/",
+  "perplexity": "https://www.perplexity.ai/",
+  "gemini": "https://gemini.google.com/app"
+};
+
+function toolUrl(name){
+  const key = (name||"").toLowerCase().trim();
+  return TOOL_URLS[key] || `https://www.google.com/search?q=${encodeURIComponent(name || '')}`;
+}
+
+// A handful of tools support putting the prompt straight into the URL so
+// it lands pre-filled in the chat box — no paste needed. This changes
+// often as the tools update their own sites, so it's kept to the ones
+// confirmed working, with a length cap so a long prompt doesn't get cut
+// off or blow past the browser's URL limit. Everything else (including
+// Claude, Gemini, and Copilot, whose prefill support is unreliable or
+// gone as of writing) just opens the tool's site — the prompt is copied
+// to the clipboard either way, so pasting it in still only takes one step.
+const URL_PREFILL_MAX_LEN = 1800;
+
+function buildToolLink(name, promptText){
+  const key = (name || '').toLowerCase().trim();
+  const encoded = encodeURIComponent(promptText || '');
+  if(encoded.length < URL_PREFILL_MAX_LEN){
+    if(key === 'chatgpt') return `https://chatgpt.com/?q=${encoded}`;
+    if(key === 'perplexity') return `https://www.perplexity.ai/search?q=${encoded}`;
+  }
+  return toolUrl(name);
+}
+
+// ---- form wiring ----
+document.getElementById('recs-updated').textContent = RECS_UPDATED;
+
+document.querySelectorAll('.chip').forEach(chip => {
+  const input = chip.querySelector('input');
+  if(!input) return;
+  chip.addEventListener('click', (e) => {
+    e.preventDefault();
+    input.checked = !input.checked;
+    chip.classList.toggle('selected', input.checked);
+    saveFormState();
+  });
+});
+
+document.getElementById('industry-select').addEventListener('change', (e) => {
+  document.getElementById('industry-other-wrap').style.display = e.target.value === '__other' ? 'block' : 'none';
+  saveFormState();
+});
+document.getElementById('industry-other').addEventListener('input', saveFormState);
+
+document.getElementById('tools-other-btn').addEventListener('click', () => {
+  const wrap = document.getElementById('custom-tool-wrap');
+  wrap.style.display = 'flex';
+  document.getElementById('tools-other-btn').style.display = 'none';
+  document.getElementById('custom-tool').focus();
+});
+
+function addCustomTool(){
+  const input = document.getElementById('custom-tool');
+  const val = input.value.trim();
+  if(!val) return;
+  const grid = document.getElementById('tools-grid');
+  const label = document.createElement('label');
+  label.className = 'chip selected';
+  label.innerHTML = `<input type="checkbox" value="${escapeHtml(val)}" checked> ${escapeHtml(val)}`;
+  label.addEventListener('click', (e) => {
+    e.preventDefault();
+    const cb = label.querySelector('input');
+    cb.checked = !cb.checked;
+    label.classList.toggle('selected', cb.checked);
+    saveFormState();
+  });
+  grid.appendChild(label);
+  input.value = '';
+  saveFormState();
+}
+
+document.getElementById('roles-other-btn').addEventListener('click', () => {
+  const wrap = document.getElementById('custom-role-wrap');
+  wrap.style.display = 'flex';
+  document.getElementById('roles-other-btn').style.display = 'none';
+  document.getElementById('custom-role').focus();
+});
+
+function addCustomRole(){
+  const input = document.getElementById('custom-role');
+  const val = input.value.trim();
+  if(!val) return;
+  const grid = document.getElementById('roles-grid');
+  const label = document.createElement('label');
+  label.className = 'chip selected';
+  label.innerHTML = `<input type="checkbox" value="${escapeHtml(val)}" checked> ${escapeHtml(val)}`;
+  label.addEventListener('click', (e) => {
+    e.preventDefault();
+    const cb = label.querySelector('input');
+    cb.checked = !cb.checked;
+    label.classList.toggle('selected', cb.checked);
+    saveFormState();
+  });
+  grid.appendChild(label);
+  input.value = '';
+  saveFormState();
+}
+
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+// Adds a "speak instead of typing" button next to a textarea, using the
+// browser's own built-in speech-to-text (no API, no cost, nothing leaves
+// the device — this is separate from the AI classification webhook).
+// Supported in Chrome/Edge; Safari and Firefox don't implement this API, so
+// the button simply doesn't appear there rather than showing something
+// broken.
+function attachMicButton(textareaEl){
+  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!Recognition) return null;
+
+  const recognition = new Recognition();
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.lang = 'en-US';
+
+  const micBtn = document.createElement('button');
+  micBtn.type = 'button';
+  micBtn.className = 'btn-mic';
+  const MIC_ICON_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>';
+  const MIC_IDLE_HTML = `<span class="mic-icon">${MIC_ICON_SVG}</span>`;
+  const MIC_LISTENING_HTML = MIC_IDLE_HTML;
+  micBtn.innerHTML = MIC_IDLE_HTML;
+  micBtn.setAttribute('aria-label', 'Talk it out — dictate your task');
+  micBtn.title = 'Talk it out';
+
+  let listening = false;
+
+  recognition.addEventListener('start', () => {
+    listening = true;
+    micBtn.classList.add('btn-mic-listening');
+    micBtn.innerHTML = MIC_LISTENING_HTML;
+    micBtn.title = 'Listening… (click to stop)';
+  });
+  recognition.addEventListener('end', () => {
+    listening = false;
+    micBtn.classList.remove('btn-mic-listening');
+    micBtn.innerHTML = MIC_IDLE_HTML;
+    micBtn.title = 'Talk it out';
+  });
+  recognition.addEventListener('result', (e) => {
+    const transcript = Array.from(e.results).map(r => r[0].transcript).join(' ').trim();
+    if(!transcript) return;
+    const existing = textareaEl.value.trim();
+    textareaEl.value = existing ? `${existing} ${transcript}` : transcript;
+    textareaEl.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  recognition.addEventListener('error', () => {
+    listening = false;
+    micBtn.classList.remove('btn-mic-listening');
+    micBtn.innerHTML = MIC_IDLE_HTML;
+    // Mic blocked, no mic present, etc. — fails silently, typing still works.
+  });
+
+  micBtn.addEventListener('click', () => {
+    if(listening){ recognition.stop(); return; }
+    try{ recognition.start(); } catch(e){ /* already running — ignore */ }
+  });
+
+  return micBtn;
+}
+
+// Applies CLIENT_CONFIG (see top of file) so a customized copy can open
+// pre-filled — or fully pre-generated — for a specific client.
+function applyClientConfig(){
+  const cfg = CLIENT_CONFIG;
+
+  if(cfg.accentColor){
+    document.documentElement.style.setProperty('--teal-1', cfg.accentColor);
+    document.documentElement.style.setProperty('--teal-2', cfg.accentColor);
+    document.documentElement.style.setProperty('--teal-glow', cfg.accentColor);
+  }
+
+  if(cfg.clientName){
+    const introP = document.querySelector('header.app-header p');
+    if(introP) introP.textContent = `A custom AI tool map built for ${cfg.clientName}.`;
+  }
+
+  if(cfg.tools && cfg.tools.length){
+    const known = Array.from(document.querySelectorAll('#tools-grid input')).map(i => i.value.toLowerCase());
+    cfg.tools.forEach(t => {
+      if(!known.includes(t.toLowerCase())){
+        document.getElementById('custom-tool').value = t;
+        addCustomTool();
+      }
+    });
+    document.querySelectorAll('#tools-grid input').forEach(i => {
+      const match = cfg.tools.some(t => t.toLowerCase() === i.value.toLowerCase());
+      i.checked = match;
+      i.closest('.chip').classList.toggle('selected', match);
+    });
+  }
+
+  if(cfg.industry){
+    const select = document.getElementById('industry-select');
+    const optionExists = Array.from(select.options).some(o => o.value === cfg.industry);
+    if(optionExists){
+      select.value = cfg.industry;
+      document.getElementById('industry-other-wrap').style.display = 'none';
+    } else {
+      select.value = '__other';
+      document.getElementById('industry-other-wrap').style.display = 'block';
+      document.getElementById('industry-other').value = cfg.industryOther || cfg.industry;
+    }
+  }
+
+  if(cfg.roles && cfg.roles.length){
+    document.querySelectorAll('#roles-grid input').forEach(i => {
+      const match = cfg.roles.some(r => r.toLowerCase() === i.value.toLowerCase());
+      i.checked = match;
+      i.closest('.chip').classList.toggle('selected', match);
+    });
+  }
+
+  if(cfg.autoGenerate){
+    generateTree();
+  }
+}
+
+function collectInputs(){
+  const tools = Array.from(document.querySelectorAll('#tools-grid input:checked')).map(i => i.value);
+  const roles = Array.from(document.querySelectorAll('#roles-grid input:checked')).map(i => i.value);
+  const industrySel = document.getElementById('industry-select').value;
+  const industry = industrySel === '__other' ? document.getElementById('industry-other').value.trim() : industrySel;
+  return { tools, roles, industry };
+}
+
+// ---- persistence: remember a team's selections between visits ----
+// Wrapped in try/catch throughout since localStorage can be unavailable or
+// blocked (private browsing, some file:// contexts) — this should degrade
+// silently to "just re-fill the form" rather than ever breaking the page.
+const STORAGE_KEY = 'aiStackNavigator.formState.v1';
+
+function saveFormState(){
+  try{
+    const tools = Array.from(document.querySelectorAll('#tools-grid input:checked')).map(i => i.value);
+    const roles = Array.from(document.querySelectorAll('#roles-grid input:checked')).map(i => i.value);
+    const industrySel = document.getElementById('industry-select').value;
+    const industryOther = document.getElementById('industry-other').value;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ tools, roles, industrySel, industryOther }));
+  } catch(e){ /* storage unavailable — nothing to do */ }
+}
+
+function restoreFormState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return;
+    const state = JSON.parse(raw);
+
+    if(state.tools && state.tools.length){
+      const known = Array.from(document.querySelectorAll('#tools-grid input')).map(i => i.value.toLowerCase());
+      state.tools.forEach(t => {
+        if(!known.includes(t.toLowerCase())){
+          document.getElementById('custom-tool').value = t;
+          addCustomTool();
+        }
+      });
+      document.querySelectorAll('#tools-grid input').forEach(i => {
+        const match = state.tools.some(t => t.toLowerCase() === i.value.toLowerCase());
+        i.checked = match;
+        i.closest('.chip').classList.toggle('selected', match);
+      });
+    }
+
+    if(state.industrySel){
+      const select = document.getElementById('industry-select');
+      const optionExists = Array.from(select.options).some(o => o.value === state.industrySel);
+      if(optionExists){
+        select.value = state.industrySel;
+        document.getElementById('industry-other-wrap').style.display = state.industrySel === '__other' ? 'block' : 'none';
+        if(state.industrySel === '__other' && state.industryOther){
+          document.getElementById('industry-other').value = state.industryOther;
+        }
+      }
+    }
+
+    if(state.roles && state.roles.length){
+      const knownRoles = Array.from(document.querySelectorAll('#roles-grid input')).map(i => i.value.toLowerCase());
+      state.roles.forEach(r => {
+        if(!knownRoles.includes(r.toLowerCase())){
+          document.getElementById('custom-role').value = r;
+          addCustomRole();
+        }
+      });
+      document.querySelectorAll('#roles-grid input').forEach(i => {
+        const match = state.roles.some(r => r.toLowerCase() === i.value.toLowerCase());
+        i.checked = match;
+        i.closest('.chip').classList.toggle('selected', match);
+      });
+    }
+  } catch(e){ /* corrupt or unavailable storage — just start fresh */ }
+}
+
+function showError(msg){
+  const box = document.getElementById('error-box');
+  box.style.display = 'block';
+  box.innerHTML = msg;
+}
+function hideError(){
+  document.getElementById('error-box').style.display = 'none';
+}
+
+// ---- local, offline rules engine (no API / account needed) ----
+
+const TOOL_PREFERENCE = {
+  writing:    ["Claude", "Gemini", "ChatGPT", "Microsoft Copilot"],
+  quickcopy:  ["ChatGPT", "Gemini", "Claude"],
+  research:   ["Perplexity", "Gemini", "ChatGPT"],
+  legal:      ["Perplexity", "Claude", "ChatGPT"],
+  summarize:  ["Claude", "ChatGPT", "Microsoft Copilot"],
+  office:     ["Microsoft Copilot", "ChatGPT", "Claude"],
+  coding:     ["Claude", "ChatGPT", "Microsoft Copilot"],
+  data:       ["ChatGPT", "Claude", "Gemini"],
+  brainstorm: ["ChatGPT", "Claude", "Gemini"],
+  support:    ["ChatGPT", "Claude", "Microsoft Copilot"]
+};
+
+const TYPE_INFO = {
+  writing:    (t) => `${t} is strong at coherent, well-structured long-form drafts you can edit.`,
+  quickcopy:  (t) => `${t} is fast for short, punchy variations like captions or ad copy.`,
+  research:   (t) => `${t} can pull in live web sources with citations for current information.`,
+  legal:      (t) => `${t} can search current legal or regulatory sources with citations.`,
+  summarize:  (t) => `${t} handles long documents well and produces accurate, faithful summaries.`,
+  office:     (t) => `${t} integrates directly with Office/Outlook/Teams, keeping formatting intact.`,
+  coding:     (t) => `${t} is well-suited for reading, writing, and debugging code.`,
+  data:       (t) => `${t} is handy for exploring datasets and building quick analyses.`,
+  brainstorm: (t) => `${t} is great for rapid idea generation and back-and-forth brainstorming.`,
+  support:    (t) => `${t} works well for drafting quick, clear customer responses.`,
+  _default:   (t) => `${t} is a flexible, general-purpose choice for a task that doesn't fit a specific category.`
+};
+
+// A short caution shown on task types that commonly involve sensitive
+// material — not a legal opinion, just a nudge to check before pasting
+// something confidential into a tool without an enterprise data agreement.
+// Types not listed here (quickcopy, research, brainstorm, writing, _default)
+// don't typically involve sensitive source material, so no note is shown.
+const SENSITIVITY_NOTES = {
+  legal:     "Contracts and case details are often confidential — check your organization's data policy before pasting them into a tool without an enterprise agreement.",
+  summarize: "If this document contains client, patient, or financial details, confirm your tool's data policy before pasting it in.",
+  data:      "If this dataset includes customer or financial records, check your data policy before uploading or pasting it in.",
+  support:   "Customer names, order details, or account info can be sensitive — include only what's necessary to resolve the issue.",
+  coding:    "Avoid pasting proprietary code, credentials, or API keys into a tool without an enterprise data agreement.",
+  office:    "If the email or message contains confidential business details, check your tool's data policy before pasting it in."
+};
+
+// Plain-language options shown in the "what kind of task is this?" clarification
+// step — every TASK_META type gets one, plus a true catch-all at the end.
+const CATEGORY_OPTIONS = [
+  { label: "Write or draft something", type: "writing" },
+  { label: "Short copy — captions, taglines, ads", type: "quickcopy" },
+  { label: "Research a topic or question", type: "research" },
+  { label: "Legal or compliance research", type: "legal" },
+  { label: "Summarize a document", type: "summarize" },
+  { label: "Draft an email or message", type: "office" },
+  { label: "Write or debug code", type: "coding" },
+  { label: "Analyze data", type: "data" },
+  { label: "Brainstorm ideas", type: "brainstorm" },
+  { label: "Draft a customer support reply", type: "support" },
+  { label: "None of these — just help me generally", type: "_default" }
+];
+
+// Minimum-detail gate: a one- or two-word description almost never has
+// enough in it to build a good prompt from, so we ask for more instead of
+// guessing at what someone means by "campaign" or "the thing."
+function isDescribeSufficient(text){
+  const trimmed = (text || '').trim();
+  const words = trimmed.split(/\s+/).filter(Boolean);
+  return trimmed.length >= 10 && words.length >= 3;
+}
+
+function countWords(text){
+  return (text || '').trim().split(/\s+/).filter(Boolean).length;
+}
+
+// Signal words the strength meter looks for across the describe box, the
+// context box, and the tone box together — so someone who packs everything
+// into the first box (typed or spoken) gets credited the same as someone
+// who fills out the separate fields.
+const AUDIENCE_KEYWORDS = ['audience','background','reader','readers','customer','customers','client','clients','who this is for','industry','role','viewer','viewers','user','users','purpose','situation','target'];
+const TONE_KEYWORDS = ['tone','length','word count','words','short','long','formal','informal','casual','friendly','professional','concise','brief','paragraph','paragraphs','page','pages','style','voice','sentence','sentences'];
+
+// Once a task type is known, a couple of short, targeted follow-up
+// questions get us the rest of the way to a genuinely good prompt. The
+// initial "describe your task" box is always used as the prompt's Task
+// line, so it already carries the subject matter — these follow-ups only
+// ask for things that box genuinely doesn't cover (audience, platform,
+// length, jurisdiction, etc.), never a restated "what's this about"
+// question, so nobody explains the same thing twice in a row.
+// Types not listed here (summarize, _default) don't need anything extra —
+// the description/context/attached file already covers it.
+// Each question has two labels: `label` is the friendly on-screen question,
+// and `promptLabel` is the short, clean tag used when assembling the
+// actual prompt (e.g. "Audience: existing customers" rather than the
+// question phrasing itself).
+const FOLLOWUP_QUESTIONS = {
+  writing: [
+    { key: 'audience', label: "Who's this for?", promptLabel: 'Audience', placeholder: 'e.g. existing customers, new leads, internal team' },
+    { key: 'length', label: 'About how long?', promptLabel: 'Length', placeholder: 'e.g. 500 words, one page' }
+  ],
+  quickcopy: [
+    { key: 'platform', label: 'Which platform is this for?', promptLabel: 'Platform', placeholder: 'e.g. Instagram, LinkedIn, X/Twitter' },
+    { key: 'count', label: 'How many variations do you want?', promptLabel: 'Number of variations', placeholder: 'e.g. 5' }
+  ],
+  research: [
+    { key: 'focus', label: 'Any specific angle, timeframe, or sources to focus on?', promptLabel: 'Focus', placeholder: 'e.g. last 6 months, focus on pricing' }
+  ],
+  legal: [
+    { key: 'jurisdiction', label: 'Which jurisdiction or region?', promptLabel: 'Jurisdiction', placeholder: 'e.g. California, EU, federal US' }
+  ],
+  coding: [
+    { key: 'stack', label: 'What language or framework?', promptLabel: 'Stack', placeholder: 'e.g. Python 3.11, React' }
+  ],
+  data: [
+    { key: 'decision', label: 'What decision should this analysis help you make?', promptLabel: 'Decision this informs', placeholder: 'e.g. whether to cut the ad budget' }
+  ],
+  brainstorm: [
+    { key: 'constraint', label: "What's the goal or constraint?", promptLabel: 'Goal / constraint', placeholder: 'e.g. budget under $5k, needs to launch in 2 weeks' }
+  ],
+  support: [
+    { key: 'situation', label: "What's the situation? What happened?", promptLabel: 'Situation', placeholder: "e.g. customer's order arrived damaged, asking for a refund" }
+  ]
+};
+
+// Wraps a group of optional fields behind a single native <details> toggle,
+// collapsed by default, so the form starts minimal and only reveals context/
+// tone/follow-up fields when someone actually clicks in to add them. Values
+// are still readable via .value even while collapsed, since the elements
+// stay in the DOM either way.
+function buildOptionalDetails(summaryText, contentEls, subtitleText){
+  const details = document.createElement('details');
+  details.className = 'optional-details';
+
+  const summary = document.createElement('summary');
+  summary.className = 'optional-summary';
+  summary.innerHTML = `
+    <span class="optional-summary-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg></span>
+    <span class="optional-summary-text">
+      <span class="optional-summary-title-wrap" tabindex="0">
+        <span class="optional-summary-title">${escapeHtml(summaryText)}</span>
+        ${subtitleText ? `<span class="optional-summary-tooltip">${escapeHtml(subtitleText)}</span>` : ''}
+      </span>
+    </span>
+    <span class="optional-summary-chevron">▾</span>
+  `;
+  details.appendChild(summary);
+
+  const content = document.createElement('div');
+  content.className = 'optional-details-content';
+  contentEls.forEach(el => content.appendChild(el));
+  details.appendChild(content);
+
+  return details;
+}
+
+const TASK_LIBRARY = {
+  "Law": [
+    { label: "Contracts", tasks: [
+      { label: "Summarize a contract", type: "summarize" },
+      { label: "Draft a clause or template", type: "writing" }
+    ]},
+    { label: "Research", tasks: [
+      { label: "Research case law or precedent", type: "legal" },
+      { label: "Check a recent regulation", type: "research" }
+    ]},
+    { label: "Client work", tasks: [
+      { label: "Draft a client email", type: "office" },
+      { label: "Summarize a deposition transcript", type: "summarize" }
+    ]}
+  ],
+  "Marketing": [
+    { label: "Content", tasks: [
+      { label: "Draft a blog post", type: "writing" },
+      { label: "Write social captions", type: "quickcopy" }
+    ]},
+    { label: "Research", tasks: [
+      { label: "Research a competitor", type: "research" },
+      { label: "Summarize an industry trend", type: "research" }
+    ]},
+    { label: "Campaigns", tasks: [
+      { label: "Brainstorm campaign ideas", type: "brainstorm" },
+      { label: "Build a slide outline", type: "writing" }
+    ]}
+  ],
+  "Healthcare": [
+    { label: "Documentation", tasks: [
+      { label: "Summarize clinical research", type: "summarize" },
+      { label: "Draft patient education materials", type: "writing" }
+    ]},
+    { label: "Research", tasks: [
+      { label: "Research a treatment guideline", type: "research" }
+    ]},
+    { label: "Admin", tasks: [
+      { label: "Draft an internal policy memo", type: "office" },
+      { label: "Draft a patient FAQ response", type: "support" }
+    ]}
+  ],
+  "Finance": [
+    { label: "Analysis", tasks: [
+      { label: "Analyze a spreadsheet of numbers", type: "data" },
+      { label: "Summarize a quarterly report", type: "summarize" }
+    ]},
+    { label: "Research", tasks: [
+      { label: "Research a market trend or competitor", type: "research" }
+    ]},
+    { label: "Client comms", tasks: [
+      { label: "Draft a client update email", type: "office" },
+      { label: "Draft an internal memo", type: "writing" }
+    ]}
+  ],
+  "Technology / Software": [
+    { label: "Engineering", tasks: [
+      { label: "Write or debug code", type: "coding" },
+      { label: "Review a pull request", type: "coding" }
+    ]},
+    { label: "Docs", tasks: [
+      { label: "Summarize technical documentation", type: "summarize" },
+      { label: "Draft release notes", type: "writing" }
+    ]},
+    { label: "Research", tasks: [
+      { label: "Research a library or API", type: "research" }
+    ]}
+  ],
+  "Consulting": [
+    { label: "Deliverables", tasks: [
+      { label: "Build a slide outline", type: "writing" },
+      { label: "Summarize a client report", type: "summarize" }
+    ]},
+    { label: "Research", tasks: [
+      { label: "Research an industry or competitor", type: "research" }
+    ]},
+    { label: "Analysis", tasks: [
+      { label: "Analyze data for a client", type: "data" }
+    ]}
+  ],
+  "Education": [
+    { label: "Content", tasks: [
+      { label: "Draft lesson materials", type: "writing" },
+      { label: "Write quiz questions", type: "quickcopy" }
+    ]},
+    { label: "Research", tasks: [
+      { label: "Research a topic for curriculum", type: "research" }
+    ]},
+    { label: "Admin", tasks: [
+      { label: "Draft a parent or student email", type: "office" }
+    ]}
+  ],
+  "Retail / E-commerce": [
+    { label: "Content", tasks: [
+      { label: "Write product descriptions", type: "quickcopy" },
+      { label: "Draft marketing copy", type: "writing" }
+    ]},
+    { label: "Support", tasks: [
+      { label: "Draft customer support replies", type: "support" }
+    ]},
+    { label: "Research", tasks: [
+      { label: "Research competitor pricing or trends", type: "research" }
+    ]}
+  ],
+  "_default": [
+    { label: "Writing", tasks: [
+      { label: "Draft long-form content", type: "writing" },
+      { label: "Write short copy or captions", type: "quickcopy" }
+    ]},
+    { label: "Research", tasks: [
+      { label: "Research a topic with current sources", type: "research" }
+    ]},
+    { label: "Documents", tasks: [
+      { label: "Summarize a long document", type: "summarize" }
+    ]},
+    { label: "Office tasks", tasks: [
+      { label: "Draft an email", type: "office" }
+    ]},
+    { label: "Brainstorming", tasks: [
+      { label: "Brainstorm ideas", type: "brainstorm" }
+    ]}
+  ]
+};
+
+const ROLE_EXTRAS = {
+  "Writers":     { label: "Writing", tasks: [{ label: "Draft long-form content", type: "writing" }] },
+  "Lawyers":     { label: "Legal work", tasks: [{ label: "Research case law or regulations", type: "legal" }, { label: "Summarize a legal document", type: "summarize" }] },
+  "Analysts":    { label: "Analysis", tasks: [{ label: "Analyze a dataset", type: "data" }] },
+  "Developers":  { label: "Engineering", tasks: [{ label: "Write or debug code", type: "coding" }] },
+  "Marketers":   { label: "Marketing", tasks: [{ label: "Write marketing copy", type: "quickcopy" }, { label: "Research competitors", type: "research" }] },
+  "Support / CS":{ label: "Customer support", tasks: [{ label: "Draft a support reply", type: "support" }] },
+  "Sales":       { label: "Sales", tasks: [{ label: "Draft a client email", type: "office" }] }
+};
+
+function pickTool(type, tools){
+  const pref = TOOL_PREFERENCE[type] || [];
+  for(const p of pref){
+    const match = tools.find(t => t.toLowerCase() === p.toLowerCase());
+    if(match) return match;
+  }
+  return tools[0];
+}
+
+// ---- prompt builder ----
+// Instead of static fill-in-the-blank templates, the user describes what they
+// actually need in their own words, and we assemble a well-structured prompt
+// around that description — no API call needed, just templating.
+
+function line(label, val){
+  return val ? `\n\n${label}: ${val}` : '';
+}
+
+const DESCRIBE_PLACEHOLDER = {
+  writing:    "e.g. A blog post announcing our new pricing plans, aimed at existing customers",
+  quickcopy:  "e.g. Instagram captions for our summer sale on hiking boots",
+  research:   "e.g. How our competitor's new pricing compares to ours",
+  legal:      "e.g. Whether our current NDA template complies with California law",
+  summarize:  "e.g. A 40-page vendor contract we're about to sign",
+  office:     "e.g. An email to a client whose invoice is overdue",
+  coding:     "e.g. A Python function that dedupes rows in a CSV by email address",
+  data:       "e.g. Monthly sales data, trying to find why Q2 revenue dropped",
+  brainstorm: "e.g. Ideas for a referral program for existing customers",
+  support:    "e.g. A reply to a customer asking for a refund outside our policy window",
+  _default:   "Describe what you want help creating or figuring out"
+};
+
+// Per-task-type content: a role framing (when one helps) and the core
+// instructions, kept as plain English — no tags, no markup. The tool-specific
+// formatting (Perplexity, Copilot, everything else) is layered on separately
+// in buildFinalPrompt() below, so this stays simple to read and to extend.
+const TASK_META = {
+  writing: {
+    role: "You are an experienced writer.",
+    instructions: (a) => `Please write a complete, ready-to-use draft${a.tone ? ` — ${a.tone}` : ''}. Return only the draft, no preamble or extra commentary.`
+  },
+  quickcopy: {
+    role: null,
+    instructions: (a) => `Give me 5 short variations (1-2 sentences each), each with a different angle: benefit-led, curiosity-led, urgency-led, social-proof-led, and plain/direct.${a.tone ? ` Keep to: ${a.tone}` : ''}`
+  },
+  research: {
+    role: null,
+    instructions: (a) => `Please research this using current, citable sources. Include:
+1. A concise summary (3-5 key points)
+2. Where sources disagree, if at all
+3. Direct links to your sources${a.tone ? line('Additional preferences', a.tone) : ''}`
+  },
+  legal: {
+    role: null,
+    instructions: (a) => `Please find current, authoritative sources (statutes, case law, or regulatory guidance) relevant to this. For each source include:
+1. Citation
+2. A 1-2 sentence summary of relevance
+3. A direct link
+
+Flag anything that seems outdated, superseded, or jurisdiction-specific.${a.tone ? line('Additional preferences', a.tone) : ''}
+
+Think this through step by step before giving your final answer.`
+  },
+  summarize: {
+    role: null,
+    pasteLabel: 'DOCUMENT',
+    instructions: (a) => `Please provide:
+1. A 3-4 sentence executive summary
+2. Key terms or points as a short list
+3. Anything unusual, risky, or that needs follow-up
+
+Stay strictly factual — don't add information that isn't in the source text below.${a.tone ? line('Additional preferences', a.tone) : ''}`
+  },
+  office: {
+    role: null,
+    instructions: (a) => `Draft it ready to send${a.tone ? `, matching: ${a.tone}` : ''}. No subject line unless I ask for one.`
+  },
+  coding: {
+    role: null,
+    pasteLabel: 'CODE',
+    instructions: (a) => `Please:
+- Write clean, working code with comments on non-obvious logic
+- Flag any edge cases you're unsure about${a.tone ? `\n- Additional requirements: ${a.tone}` : ''}
+
+Think through the logic step by step before writing the final code.`
+  },
+  data: {
+    role: null,
+    pasteLabel: 'DATA',
+    instructions: (a) => `Please:
+1. Identify key trends or anomalies
+2. Suggest 2-3 visualizations that would clarify the findings
+3. Note any data quality issues you notice${a.tone ? line('Additional preferences', a.tone) : ''}
+
+Work through the numbers step by step before giving your conclusions.`
+  },
+  brainstorm: {
+    role: null,
+    instructions: (a) => `Give me 8-10 distinct ideas, grouped by theme. For each, add one line on why it could work and one risk or tradeoff. Don't repeat the same idea with different wording.${a.tone ? line('Additional preferences', a.tone) : ''}`
+  },
+  support: {
+    role: null,
+    instructions: (a) => `Draft a reply that:
+- Acknowledges the issue directly
+- Resolves it or explains next steps clearly${a.tone ? `\n- Matches: ${a.tone}` : ''}
+- Stays concise`
+  },
+  _default: {
+    role: null,
+    instructions: (a) => `Please complete this, thinking it through step by step before giving your final answer.${a.tone ? line('Preferences', a.tone) : ''}`
+  }
+};
+
+function isPerplexityTool(tool){ return (tool || '').toLowerCase().includes('perplexity'); }
+function isCopilotTool(tool){ return (tool || '').toLowerCase().includes('copilot'); }
+function isChatGPTTool(tool){ const t = (tool || '').toLowerCase(); return t.includes('chatgpt') || t.includes('gpt'); }
+
+// Renders the "paste your material" block, phrased differently for Copilot
+// (which can usually just look at the document/email already open) than for
+// everything else (which needs the content pasted in).
+function pasteBlock(label, tool){
+  if(!label) return '';
+  if(isCopilotTool(tool)){
+    return `\n\nIf the ${label.toLowerCase()} is already open in Word, Outlook, or Excel, reference that directly instead of pasting it in. Otherwise, paste it below:\n\n---\n[PASTE ${label} HERE]`;
+  }
+  return `\n\n---\n[PASTE ${label} HERE]`;
+}
+
+// Assembles the final prompt. Same plain, readable shape for every tool —
+// no tags or markup — with small, tool-specific adjustments layered in,
+// each matching that vendor's own current prompting guidance:
+// - Perplexity: phrased as a direct question, and told to back every claim
+//   with a short direct quote + named source (Perplexity's own guidance —
+//   vague "cite sources" asks produce weaker citations than an explicit
+//   quote-and-name requirement).
+// - Copilot: the "reference what's already open" nudge is placed LAST,
+//   after the task/context/instructions — Microsoft's own guidance says
+//   later parts of a prompt get more weight, so source/file references
+//   should come at the end, not buried up top.
+// - ChatGPT: sections get explicit ### delimiters — OpenAI's guidance
+//   specifically calls out separating instructions/context with delimiters
+//   for more reliable parsing, whereas Claude/Gemini/custom tools do best
+//   with the plain, unadorned version (minimum necessary structure).
+function buildFinalPrompt({ describe, context, tone, type, tool }){
+  const meta = TASK_META[type] || TASK_META._default;
+  const instructionsText = meta.instructions({ tone });
+  const paste = pasteBlock(meta.pasteLabel, tool);
+
+  if(isPerplexityTool(tool)){
+    let out = describe;
+    if(context) out += `\n\nContext: ${context}`;
+    out += `\n\n${instructionsText}`;
+    out += `\n\nFor every claim, include a short direct quote (20 words or fewer) in quotation marks and name the source it came from. If sources disagree with each other, say so explicitly rather than picking one silently.`;
+    out += paste;
+    return out;
+  }
+
+  const chatgpt = isChatGPTTool(tool);
+  const copilotFileNote = (isCopilotTool(tool) && !meta.pasteLabel)
+    ? `\n\nIf this relates to a document, email, or meeting you already have open, reference that directly rather than pasting it below.`
+    : '';
+
+  let out = '';
+  if(meta.role) out += `${meta.role}\n\n`;
+  out += chatgpt ? `### Task\n${describe}` : `Task: ${describe}`;
+  if(context) out += chatgpt ? `\n\n### Context\n${context}` : `\n\nContext: ${context}`;
+  out += chatgpt ? `\n\n### Instructions\n${instructionsText}` : `\n\n${instructionsText}`;
+  out += copilotFileNote;
+  out += paste;
+  return out;
+}
+
+const TOOL_TIPS = {
+  "claude": "Paste full source documents right into the chat — Claude handles long context well and won't lose track of details.",
+  "chatgpt": "Use follow-up turns to refine tone or length rather than rewriting the whole prompt from scratch.",
+  "microsoft copilot": "Open the relevant Word/Outlook/Teams item first — Copilot can reference it directly instead of needing everything pasted in.",
+  "copilot": "Open the relevant Word/Outlook/Teams item first — Copilot can reference it directly instead of needing everything pasted in.",
+  "perplexity": "Ask it as a direct question and request sources — Perplexity is built to search and cite, not just recall.",
+  "gemini": "If you're in Google Workspace, reference the doc or sheet directly rather than pasting the content in.",
+  "default": "Be specific about tone, length, and format so the first draft needs less editing."
+};
+
+function toolTip(tool){
+  return TOOL_TIPS[(tool||"").toLowerCase().trim()] || TOOL_TIPS.default;
+}
+
+function buildLeaf(task, tools){
+  const tool = pickTool(task.type, tools);
+  const explain = TYPE_INFO[task.type];
+  const reason = explain ? explain(tool) : `${tool} is a solid general-purpose choice for this task.`;
+  return { label: task.label, recommendation: { tool, reason, type: task.type } };
+}
+
+// ---- catch-all classifier for tasks that don't fit a listed category ----
+
+const KEYWORD_MAP = {
+  writing:    ["draft", "blog", "article", "write a blog", "blog post", "write an article", "write a post", "write a story", "script", "content piece", "write copy", "write up", "newsletter", "press release", "white paper", "case study", "landing page", "speech", "op-ed", "essay", "long-form"],
+  quickcopy:  ["caption", "tagline", "ad copy", "tweet", "social post", "social media post", "social media posts", "post for social media", "short copy", "headline", "slogan", "instagram post", "facebook post", "linkedin post", "tiktok caption", "promotional post", "subject line", "product description"],
+  research:   ["research", "competitor", "market trend", "industry trend", "look up", "find information", "find out about", "background on", "market research", "comparison of", "current state of", "trends in", "benchmark", "what's the latest"],
+  legal:      ["case law", "statute", "regulation", "compliance", "legal question", "jurisdiction", "nda", "contract law", "terms of service", "privacy policy", "liability", "gdpr", "employment law"],
+  summarize:  ["summarize", "summary", "tl;dr", "condense", "shorten", "key points from", "boil down", "recap of", "main points", "distill"],
+  office:     ["email", "memo", "letter", "message to", "follow up with", "reach out to", "respond to", "reply to a client", "meeting notes", "meeting recap", "agenda", "invite"],
+  coding:     ["code", "function", "bug", "debug", "script", "program", "python", "javascript", "api", "pull request", "sql query", "algorithm", "unit test", "refactor", "error message", "stack trace"],
+  data:       ["data", "spreadsheet", "csv", "dataset", "analyze numbers", "chart", "trend in the numbers", "excel", "pivot table", "sales numbers", "metrics", "kpi", "dashboard", "forecast"],
+  brainstorm: ["brainstorm", "ideas for", "ideate", "think of ideas", "list of ideas", "campaign ideas", "marketing campaign", "social media campaign", "name ideas", "concept for", "angles for", "options for", "campaign"],
+  support:    ["customer", "refund", "complaint", "support ticket", "reply to a customer", "customer service", "apology to a client", "cancellation request", "billing issue"]
+};
+
+// Turns text into a word set for the fallback matcher below. Adds a crude
+// de-pluralized form of longer words ("posts" -> also "post") so word-level
+// matches aren't defeated by simple plurals.
+function wordSet(lower){
+  const words = lower.split(/[^a-z0-9']+/).filter(Boolean);
+  const set = new Set();
+  words.forEach(w => {
+    set.add(w);
+    if(w.length > 3 && w.endsWith('s')) set.add(w.slice(0, -1));
+  });
+  return set;
+}
+
+function classifyText(text){
+  const lower = (text || '').toLowerCase();
+  const words = wordSet(lower);
+  let bestType = null;
+  let bestScore = 0;
+  Object.keys(KEYWORD_MAP).forEach(type => {
+    let score = 0;
+    KEYWORD_MAP[type].forEach(kw => {
+      if(lower.includes(kw)){
+        score += 2; // exact phrase found — strong signal
+      } else {
+        const kwWords = kw.split(/\s+/);
+        if(kwWords.length > 1 && kwWords.every(w => words.has(w))){
+          score += 1; // all the words are there, just not adjacent/in order
+        }
+      }
+    });
+    if(score > bestScore){ bestScore = score; bestType = type; }
+  });
+  return bestType;
+}
+
+// Given a KNOWN type (from keyword match or from the user explicitly
+// picking a category), work out the tool + reason. This is the "safe"
+// path — it's never called with a guess we're not sure about.
+function recommendForType(type, tools){
+  const tool = pickTool(type, tools);
+  const explain = TYPE_INFO[type];
+  const reason = explain ? explain(tool) : `${tool} is a solid choice for this.`;
+  return { type, tool, reason };
+}
+
+function recommendForText(text, tools){
+  const type = classifyText(text);
+  if(type){
+    return recommendForType(type, tools);
+  }
+  const tool = tools[0];
+  return {
+    type: '_default',
+    tool,
+    reason: `This didn't clearly match one category, so we defaulted to ${tool} — the first tool on your list. Try a more specific description above, or just pick a different tool from your stack if this one isn't the right fit.`
+  };
+}
+
+// Asks the Make.com webhook (Claude Haiku, no web search — this only needs
+// to understand plain-language phrasing, not check anything live) to
+// classify an open-ended description into one of our known task types. Used
+// only by the "Something else" box, only when it's actually worth the
+// round-trip. Degrades silently to the local keyword classifier on any
+// failure — slow network, webhook down, bad response, whatever — so this
+// box always works even if the AI call doesn't.
+async function classifyViaAI(describeText){
+  try{
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    const res = await fetch(AI_CLASSIFY_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ task: describeText }),
+      signal: controller.signal
+    });
+    clearTimeout(timeoutId);
+    if(!res.ok) return null;
+    const data = await res.json();
+    const rawType = (data && (data.type || data.Type)) || '';
+    const type = String(rawType).trim().toLowerCase().replace(/[^a-z_]/g, '');
+    const knownTypes = Object.keys(TASK_META);
+    return knownTypes.includes(type) ? type : null;
+  } catch(e){
+    return null; // network error, timeout, CORS, malformed JSON — just fall back
+  }
+}
+
+// Asks the "enhance" webhook (a separate Claude call, richer than the
+// classifier above) to write an actually-tailored prompt from the raw
+// answers, instead of the local template just slotting them in verbatim.
+// Only called when someone clicks "Enhance with AI" — never automatically —
+// so the free instant version stays the default and this stays a deliberate,
+// opt-in upgrade. Returns null on any failure so the caller can just leave
+// the local template in place rather than showing a broken state.
+// Make's webhook response occasionally contains a real line break inside
+// what's supposed to be a single JSON string (a known Make quirk with
+// multi-paragraph AI output) — that makes strict JSON.parse throw even
+// though the actual content is perfectly fine. Try a real parse first;
+// if that fails, pull the text straight out of the {"prompt":"..."} shape
+// by hand instead of giving up. If it's not JSON-shaped at all (plain
+// text response), just use it as-is.
+function extractEnhancedText(raw){
+  const text = String(raw || '').trim();
+  if(!text) return '';
+  try{
+    const data = JSON.parse(text);
+    const val = (data && (data.prompt || data.Prompt || data.result)) || '';
+    if(String(val).trim()) return String(val).trim();
+  } catch(e){ /* fall through to manual extraction below */ }
+
+  const m = text.match(/^\{?\s*"?(?:prompt|Prompt|result)"?\s*:\s*"([\s\S]*)"\s*\}?\s*$/);
+  if(m && m[1]){
+    return m[1].replace(/\\n/g, '\n').replace(/\\"/g, '"').replace(/\\t/g, '\t').trim();
+  }
+
+  if(!text.startsWith('{')) return text; // already plain text
+  return '';
+}
+
+async function enhancePromptOnce({ describe, context, type, tool, currentPrompt }){
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
+  const res = await fetch(AI_ENHANCE_WEBHOOK_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ describe, context, type, tool, currentPrompt }),
+    signal: controller.signal
+  });
+  clearTimeout(timeoutId);
+  if(!res.ok) throw new Error('bad status ' + res.status);
+  const raw = await res.text();
+  const trimmed = extractEnhancedText(raw);
+  if(!trimmed) throw new Error('empty response');
+  return trimmed;
+}
+
+// Retries once after a short pause before giving up — a brand-new Anthropic
+// account has fairly low rate limits, and this scenario has been hit with
+// a lot of rapid test traffic, so a single transient rate-limit error
+// shouldn't have to mean falling all the way back to the plain template.
+async function enhancePromptViaAI(args){
+  try{
+    return await enhancePromptOnce(args);
+  } catch(e){
+    try{
+      await new Promise(r => setTimeout(r, 2500));
+      return await enhancePromptOnce(args);
+    } catch(e2){
+      return null; // still failing after a retry — leave the local version showing
+    }
+  }
+}
+
+function buildLocalTree(tools, industry, roles){
+  const industryCategories = TASK_LIBRARY[industry] || TASK_LIBRARY._default;
+  const categories = industryCategories.map(c => ({ label: c.label, tasks: c.tasks.slice() }));
+
+  roles.forEach(role => {
+    const extra = ROLE_EXTRAS[role];
+    if(!extra) return;
+    const exists = categories.some(c => c.label.toLowerCase() === extra.label.toLowerCase());
+    if(!exists) categories.push({ label: extra.label, tasks: extra.tasks.slice() });
+  });
+
+  const children = categories.map(cat => ({
+    label: cat.label,
+    children: cat.tasks.map(t => buildLeaf(t, tools))
+  }));
+
+  // catch-all for tasks that don't fit any category above
+  children.push({ dynamic: true, label: "Something else" });
+
+  return {
+    title: "Your AI Stack Map",
+    subtitle: `${industry} team${roles.length ? ` · ${roles.join(', ')}` : ''}`,
+    root: {
+      label: "What do you need to do?",
+      children
+    }
+  };
+}
+
+// Holds the most recently generated map so it can be exported as text
+// without having to walk the live DOM.
+let currentTree = null;
+
+function downloadTextFile(filename, content){
+  const blob = new Blob([content], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function exportTreeAsText(){
+  if(!currentTree) return;
+  const lines = [];
+  lines.push(currentTree.title || 'Your AI Stack Map');
+  if(currentTree.subtitle) lines.push(currentTree.subtitle);
+  lines.push(`Recommendations current as of ${RECS_UPDATED} · Generated ${new Date().toLocaleDateString()}`);
+  lines.push('');
+
+  (currentTree.root.children || []).forEach(cat => {
+    if(cat.dynamic) return;
+    lines.push(cat.label + ':');
+    (cat.children || []).forEach(leaf => {
+      if(leaf.recommendation){
+        lines.push(`  - ${leaf.label}: ${leaf.recommendation.tool} — ${leaf.recommendation.reason}`);
+      }
+    });
+    lines.push('');
+  });
+
+  downloadTextFile(`ai-stack-map-${Date.now()}.txt`, lines.join('\n').trim() + '\n');
+}
+
+function generateTree(){
+  hideError();
+  const { tools, roles, industry } = collectInputs();
+
+  if(tools.length === 0){ showError('Select at least one AI tool your team uses.'); return; }
+  if(!industry){ showError('Select or enter your industry.'); return; }
+
+  document.getElementById('form-section').style.display = 'none';
+  document.getElementById('loading').style.display = 'block';
+
+  setTimeout(() => {
+    const tree = buildLocalTree(tools, industry, roles);
+    renderTree(tree, tools);
+  }, 350);
+}
+
+function loadExample(){
+  hideError();
+  document.querySelectorAll('#tools-grid input').forEach(i => {
+    i.checked = ["Claude", "ChatGPT", "Perplexity", "Microsoft Copilot"].includes(i.value);
+    i.closest('.chip').classList.toggle('selected', i.checked);
+  });
+  document.getElementById('industry-select').value = "Marketing";
+  document.getElementById('industry-other-wrap').style.display = 'none';
+  document.querySelectorAll('#roles-grid input').forEach(i => {
+    i.checked = ["Marketers", "Writers"].includes(i.value);
+    i.closest('.chip').classList.toggle('selected', i.checked);
+  });
+  generateTree();
+}
+
+function renderTree(tree, tools){
+  currentTree = tree;
+
+  document.getElementById('form-section').style.display = 'none';
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('tree-section').style.display = 'block';
+
+  document.getElementById('tree-title').textContent = tree.title || 'Your AI Stack Map';
+  document.getElementById('tree-subtitle').textContent = tree.subtitle || '';
+  document.getElementById('print-date').textContent =
+    `Recommendations current as of ${RECS_UPDATED} · Printed ${new Date().toLocaleDateString()}`;
+
+  const legend = document.getElementById('legend');
+  legend.innerHTML = tools.map(t => `
+    <div class="legend-item">
+      <span class="legend-dot" style="background:${toolColor(t)}"></span>${escapeHtml(t)}
+    </div>
+  `).join('');
+
+  const container = document.getElementById('tree-root');
+  container.innerHTML = '';
+  const ul = document.createElement('ul');
+  ul.className = 'tree';
+  ul.appendChild(buildNode(tree.root, true, tools));
+  container.appendChild(ul);
+}
+
+function buildNode(node, isRoot, tools){
+  const li = document.createElement('li');
+
+  if(node.dynamic){
+    li.appendChild(buildDynamicLeaf(node, tools));
+    return li;
+  }
+
+  if(node.recommendation){
+    const rec = node.recommendation;
+    const color = toolColor(rec.tool);
+
+    const wrap = document.createElement('div');
+    wrap.className = 'leaf-wrap';
+
+    const leaf = document.createElement('div');
+    leaf.className = 'leaf';
+    leaf.innerHTML = `
+      <div class="tool-badge" style="background:${color}">${escapeHtml((rec.tool||'?').slice(0,2).toUpperCase())}</div>
+      <div class="leaf-body">
+        <strong>${escapeHtml(node.label)}</strong>
+        <span><b style="color:${color}">${escapeHtml(rec.tool)}</b> — ${escapeHtml(rec.reason)}</span>
+      </div>
+    `;
+
+    let sensitivityEl = null;
+    const sensitivityText = SENSITIVITY_NOTES[rec.type];
+    if(sensitivityText){
+      sensitivityEl = document.createElement('div');
+      sensitivityEl.className = 'sensitivity-note';
+      sensitivityEl.innerHTML = `<b>Heads up:</b> ${escapeHtml(sensitivityText)}`;
+    }
+
+    const toggleBtn = document.createElement('button');
+    toggleBtn.className = 'btn-prompt';
+    toggleBtn.type = 'button';
+    toggleBtn.textContent = 'Build my prompt →';
+
+    const panel = document.createElement('div');
+    panel.className = 'prompt-panel';
+    panel.style.display = 'none';
+
+    // --- step 1: ask what they're trying to do ---
+    const formStep = document.createElement('div');
+    formStep.className = 'prompt-form';
+
+    const describeLabel = document.createElement('label');
+    describeLabel.className = 'field-label';
+    describeLabel.textContent = 'What do you need?';
+    const describeInput = document.createElement('textarea');
+    describeInput.className = 'prompt-input';
+    describeInput.rows = 2;
+    describeInput.placeholder = DESCRIBE_PLACEHOLDER[rec.type] || DESCRIBE_PLACEHOLDER._default;
+    const describeMicBtn = attachMicButton(describeInput);
+
+    const contextInput = document.createElement('textarea');
+    contextInput.className = 'prompt-input';
+    contextInput.rows = 2;
+    contextInput.placeholder = 'Background, audience, source material, constraints…';
+
+    // --- file drop zone (client-side only, nothing is uploaded) ---
+    const dropzone = document.createElement('div');
+    dropzone.className = 'dropzone';
+    dropzone.innerHTML = `<span><u>Click to browse</u> or drag files here</span><span class="dropzone-sub">Text-based files (.txt, .md, .csv, .json, code, etc.) get pulled in automatically. Everything stays in your browser.</span>`;
+
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.multiple = true;
+    fileInput.style.display = 'none';
+
+    const chipList = document.createElement('div');
+    chipList.className = 'file-chip-list';
+
+    let attachedFiles = [];
+    let fileIdCounter = 0;
+    const TEXT_EXTENSIONS = ['.txt','.md','.markdown','.csv','.tsv','.json','.log','.js','.jsx','.ts','.tsx','.py','.html','.htm','.css','.yaml','.yml','.xml','.rtf'];
+
+    function isTextFile(file){
+      if(file.type && file.type.startsWith('text/')) return true;
+      if(file.type === 'application/json') return true;
+      const lower = file.name.toLowerCase();
+      return TEXT_EXTENSIONS.some(ext => lower.endsWith(ext));
+    }
+
+    function renderChips(){
+      chipList.innerHTML = '';
+      attachedFiles.forEach(f => {
+        const chip = document.createElement('span');
+        chip.className = 'file-chip' + (f.unsupported ? ' unsupported' : '');
+        chip.innerHTML = `${escapeHtml(f.name)}${f.unsupported ? ' <i>(not readable here)</i>' : f.truncated ? ' <i>(truncated)</i>' : ''} <button type="button" aria-label="Remove ${escapeHtml(f.name)}">×</button>`;
+        chip.querySelector('button').addEventListener('click', () => {
+          attachedFiles = attachedFiles.filter(x => x.id !== f.id);
+          renderChips();
+        });
+        chipList.appendChild(chip);
+      });
+    }
+
+    function handleFiles(fileListLike){
+      Array.from(fileListLike).forEach(file => {
+        const id = ++fileIdCounter;
+        if(isTextFile(file)){
+          const reader = new FileReader();
+          reader.onload = () => {
+            let text = String(reader.result || '');
+            let truncated = false;
+            if(text.length > 4000){ text = text.slice(0, 4000); truncated = true; }
+            attachedFiles.push({ id, name: file.name, text, truncated, unsupported: false });
+            renderChips();
+          };
+          reader.onerror = () => {
+            attachedFiles.push({ id, name: file.name, text: null, unsupported: true });
+            renderChips();
+          };
+          reader.readAsText(file);
+        } else {
+          attachedFiles.push({ id, name: file.name, text: null, unsupported: true });
+          renderChips();
+        }
+      });
+    }
+
+    dropzone.addEventListener('click', () => fileInput.click());
+    dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+    dropzone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('dragover');
+      if(e.dataTransfer && e.dataTransfer.files) handleFiles(e.dataTransfer.files);
+    });
+    fileInput.addEventListener('change', () => {
+      handleFiles(fileInput.files);
+      fileInput.value = '';
+    });
+
+    const toneLabel = document.createElement('label');
+    toneLabel.className = 'field-label';
+    toneLabel.textContent = 'Tone, length, or format preferences?';
+    const toneInput = document.createElement('input');
+    toneInput.type = 'text';
+    toneInput.className = 'prompt-input';
+    toneInput.placeholder = 'e.g. friendly, under 200 words, bullet points';
+
+    const genErr = document.createElement('p');
+    genErr.className = 'prompt-error';
+    genErr.style.display = 'none';
+
+    // A couple of short, category-specific follow-ups (platform, audience,
+    // language, etc.) — asked upfront rather than guessed at. The "topic"
+    // question (what's this actually about) is the one thing a format-only
+    // description like "Friday blog post" never supplies, so it's pulled out
+    // and made required + always visible rather than optional and hidden
+    // behind the details toggle — without it, the assembled prompt has no
+    // real subject matter and Claude/ChatGPT/etc. would just be guessing.
+    const followupInputs = [];
+    let topicEntry = null;
+    (FOLLOWUP_QUESTIONS[rec.type] || []).forEach(q => {
+      const isTopic = q.key === 'topic';
+      const fLabel = document.createElement('label');
+      fLabel.className = 'field-label';
+      fLabel.textContent = isTopic ? q.label : `${q.label} (optional)`;
+      const fInput = document.createElement('input');
+      fInput.type = 'text';
+      fInput.className = 'prompt-input';
+      fInput.placeholder = q.placeholder;
+      const entry = { key: q.key, promptLabel: q.promptLabel || q.label, input: fInput, labelEl: fLabel };
+      followupInputs.push(entry);
+      if(isTopic) topicEntry = entry;
+    });
+
+    const topicErr = document.createElement('p');
+    topicErr.className = 'prompt-error';
+    topicErr.style.display = 'none';
+
+    const generateBtn = document.createElement('button');
+    generateBtn.className = 'btn-primary';
+    generateBtn.type = 'button';
+    generateBtn.textContent = 'Generate my prompt →';
+
+    // Everything except the required topic question is optional, so it's
+    // tucked behind one toggle rather than shown by default — the form
+    // starts with just the required description + topic, and this whole
+    // group appears only if someone actually wants to add more.
+    const optionalContent = [contextInput, dropzone, fileInput, chipList, toneLabel, toneInput];
+    followupInputs.forEach(f => {
+      if(f === topicEntry) return; // shown separately, always visible
+      optionalContent.push(f.labelEl);
+      optionalContent.push(f.input);
+    });
+    const optionalDetails = buildOptionalDetails(
+      'Add context/files',
+      optionalContent,
+      'Paste background info, drop in reference files, or set a tone/length — all optional'
+    );
+
+    const describeWrap = document.createElement('div');
+    describeWrap.className = 'describe-input-wrap';
+    describeWrap.appendChild(describeInput);
+    if(describeMicBtn) describeWrap.appendChild(describeMicBtn);
+    formStep.appendChild(describeLabel);
+    formStep.appendChild(describeWrap);
+    if(topicEntry){
+      formStep.appendChild(topicEntry.labelEl);
+      formStep.appendChild(topicEntry.input);
+      formStep.appendChild(topicErr);
+    }
+    formStep.appendChild(optionalDetails);
+    formStep.appendChild(genErr);
+    formStep.appendChild(generateBtn);
+
+    // --- step 2: the assembled prompt ---
+    const resultStep = document.createElement('div');
+    resultStep.className = 'prompt-result';
+    resultStep.style.display = 'none';
+
+    const tipEl = document.createElement('p');
+    tipEl.className = 'prompt-tip';
+    tipEl.innerHTML = `<b style="color:${color}">${escapeHtml(rec.tool)} tip:</b> ${escapeHtml(toolTip(rec.tool))}`;
+
+    const outputArea = document.createElement('textarea');
+    outputArea.className = 'prompt-text';
+    outputArea.spellcheck = false;
+
+    const resultActions = document.createElement('div');
+    resultActions.className = 'prompt-actions';
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'btn-mini';
+    copyBtn.type = 'button';
+    copyBtn.textContent = 'Copy prompt';
+    copyBtn.addEventListener('click', () => copyPrompt(copyBtn, outputArea));
+    const editBtn = document.createElement('button');
+    editBtn.className = 'btn-ghost-mini';
+    editBtn.type = 'button';
+    editBtn.textContent = '← Edit my answers';
+    editBtn.addEventListener('click', () => {
+      resultStep.style.display = 'none';
+      formStep.style.display = 'block';
+    });
+    resultActions.appendChild(copyBtn);
+    resultActions.appendChild(editBtn);
+
+    const enhanceNote = document.createElement('p');
+    enhanceNote.className = 'note';
+    enhanceNote.style.display = 'none';
+
+    resultStep.appendChild(tipEl);
+    resultStep.appendChild(outputArea);
+    resultStep.appendChild(resultActions);
+    resultStep.appendChild(enhanceNote);
+
+    generateBtn.addEventListener('click', async () => {
+      const describe = describeInput.value.trim();
+      if(!describe){
+        genErr.textContent = 'Tell us what you need first — even a sentence works.';
+        genErr.style.display = 'block';
+        describeInput.focus();
+        return;
+      }
+      if(!isDescribeSufficient(describe)){
+        genErr.textContent = "That's a bit thin to build a good prompt from — add a few more words about what you actually want (who it's for, what it covers, anything specific).";
+        genErr.style.display = 'block';
+        describeInput.focus();
+        return;
+      }
+      genErr.style.display = 'none';
+
+      if(topicEntry && !topicEntry.input.value.trim()){
+        topicErr.textContent = "This is the one thing we can't guess for you — fill it in so the prompt has real substance instead of a generic template.";
+        topicErr.style.display = 'block';
+        topicEntry.input.focus();
+        return;
+      }
+      topicErr.style.display = 'none';
+
+      const followupLines = followupInputs
+        .map(f => ({ label: f.promptLabel, val: f.input.value.trim() }))
+        .filter(f => f.val)
+        .map(f => `${f.label}: ${f.val}`)
+        .join('\n');
+
+      let combinedContext = [contextInput.value.trim(), followupLines].filter(Boolean).join('\n\n');
+      attachedFiles.forEach(f => {
+        if(f.text){
+          combinedContext += `\n\n[Attached file: ${f.name}${f.truncated ? ', truncated' : ''}]\n${f.text}`;
+        } else if(f.unsupported){
+          combinedContext += `\n\n[Attached file: ${f.name} — couldn't read this file type in-browser; paste key details manually if needed]`;
+        }
+      });
+      combinedContext = combinedContext.trim();
+
+      const finalPrompt = buildFinalPrompt({
+        describe,
+        context: combinedContext,
+        tone: toneInput.value.trim(),
+        type: rec.type,
+        tool: rec.tool
+      });
+
+      // Show the result screen right away with a placeholder while Claude
+      // writes the tailored version — the local template is only a
+      // fallback now, never shown as the "real" answer unless the AI call
+      // fails.
+      outputArea.value = 'Writing your tailored prompt…';
+      outputArea.rows = 3;
+      copyBtn.disabled = true;
+      enhanceNote.style.display = 'none';
+      formStep.style.display = 'none';
+      resultStep.style.display = 'flex';
+
+      const enhanced = await enhancePromptViaAI({
+        describe, context: combinedContext, type: rec.type, tool: rec.tool,
+        currentPrompt: finalPrompt
+      });
+      const finalText = enhanced || finalPrompt;
+      outputArea.value = finalText;
+      outputArea.rows = Math.min(18, Math.max(6, finalText.split('\n').length));
+      copyBtn.disabled = false;
+      if(!enhanced){
+        enhanceNote.textContent = "The AI enhancer wasn't reachable just now, so this is the standard version — everything you entered is still in there.";
+        enhanceNote.style.display = 'block';
+      }
+    });
+
+    panel.appendChild(formStep);
+    panel.appendChild(resultStep);
+
+    toggleBtn.addEventListener('click', () => {
+      const open = panel.style.display === 'block';
+      panel.style.display = open ? 'none' : 'block';
+      toggleBtn.textContent = open ? 'Build my prompt →' : 'Hide prompt ▲';
+    });
+
+    wrap.appendChild(leaf);
+    if(sensitivityEl) wrap.appendChild(sensitivityEl);
+    wrap.appendChild(toggleBtn);
+    wrap.appendChild(panel);
+    li.appendChild(wrap);
+    return li;
+  }
+
+  const nodeEl = document.createElement('div');
+  nodeEl.className = 'node' + (isRoot ? ' root-node' : '');
+  nodeEl.innerHTML = `<span class="caret">▶</span><span>${escapeHtml(node.label)}</span>`;
+
+  const childUl = document.createElement('ul');
+  childUl.style.display = isRoot ? 'block' : 'none';
+  if(isRoot) nodeEl.classList.add('expanded');
+
+  (node.children || []).forEach(child => {
+    childUl.appendChild(buildNode(child, false, tools));
+  });
+
+  if(!isRoot){
+    nodeEl.tabIndex = 0;
+    nodeEl.setAttribute('role', 'button');
+    nodeEl.setAttribute('aria-expanded', 'false');
+    const toggleNode = () => {
+      const open = childUl.style.display === 'block';
+      childUl.style.display = open ? 'none' : 'block';
+      nodeEl.classList.toggle('expanded', !open);
+      nodeEl.setAttribute('aria-expanded', String(!open));
+    };
+    nodeEl.addEventListener('click', toggleNode);
+    nodeEl.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter' || e.key === ' '){
+        e.preventDefault();
+        toggleNode();
+      }
+    });
+  }
+
+  li.appendChild(nodeEl);
+  li.appendChild(childUl);
+  return li;
+}
+
+// Catch-all node: task isn't listed, so ask the user to describe it, then
+// classify + recommend a tool + build the prompt all in one step.
+function buildDynamicLeaf(node, tools, alwaysOpen){
+  const wrap = document.createElement('div');
+  wrap.className = 'leaf-wrap';
+
+  const intro = document.createElement('div');
+  if(alwaysOpen){
+    // This is the whole app now — a plain heading, not a collapsible card.
+    // The title + "Go back" button share a row (space-between); the
+    // description is a separate full-width block below that row so it can
+    // wrap using the whole card width instead of a narrow column beside
+    // the button.
+    intro.className = 'task-box-intro';
+    intro.innerHTML = `
+      <div class="task-box-heading">
+        <h2 class="step-title">${escapeHtml(node.label)}</h2>
+      </div>
+      <p class="step-desc">Tell us what you're looking for, or tap the mic to talk it out.</p>
+    `;
+  } else {
+    intro.className = 'leaf dynamic-intro';
+    intro.innerHTML = `
+      <div class="tool-badge" style="background:var(--teal-glow);color:#04211f;">?</div>
+      <div class="leaf-body">
+        <strong>${escapeHtml(node.label)}</strong>
+        <span>Not seeing your task above? Describe it and we'll recommend the best tool from your list, then build the prompt.</span>
+      </div>
+    `;
+  }
+
+  const formStep = document.createElement('div');
+  formStep.className = 'prompt-form';
+  formStep.style.display = alwaysOpen ? 'block' : 'none';
+
+  const describeLabel = document.createElement('label');
+  describeLabel.className = 'field-label';
+  describeLabel.textContent = 'What do you need?';
+  const describeInput = document.createElement('textarea');
+  describeInput.className = 'prompt-input';
+  describeInput.rows = 2;
+  describeInput.placeholder = 'Describe your task in a sentence or two…';
+  const describeMicBtn = attachMicButton(describeInput);
+
+  // Live strength meter — red/yellow/green — instead of a hard word-count
+  // gate. Nudges people toward adding real detail (which is what actually
+  // makes the AI-enhanced prompt good) without a scary error the instant
+  // they start typing. Only the red zone blocks generation.
+  const strengthMeter = document.createElement('div');
+  strengthMeter.className = 'strength-meter';
+  strengthMeter.innerHTML = `
+    <div class="strength-row">
+      <span class="strength-label">Prompt strength</span>
+      <span class="strength-status"></span>
+    </div>
+    <div class="strength-track"><div class="strength-fill"></div></div>
+  `;
+  const strengthStatus = strengthMeter.querySelector('.strength-status');
+  const strengthTrack = strengthMeter.querySelector('.strength-track');
+  const strengthFill = strengthMeter.querySelector('.strength-fill');
+  // The fill's gradient needs to be sized to the track's actual pixel
+  // width, not a percentage of the fill's own (currently short) width —
+  // otherwise a short bar would show a squashed full red-to-green
+  // gradient instead of just its red/orange leading edge. Measured once
+  // the track is actually laid out, and re-measured on resize.
+  function syncStrengthGradientWidth(){
+    const w = strengthTrack.getBoundingClientRect().width;
+    if(w > 0) strengthFill.style.backgroundSize = `${w}px 100%`;
+  }
+  requestAnimationFrame(syncStrengthGradientWidth);
+  window.addEventListener('resize', syncStrengthGradientWidth);
+
+  const contextInput = document.createElement('textarea');
+  contextInput.className = 'prompt-input';
+  contextInput.rows = 2;
+  contextInput.placeholder = 'Background, audience, source material, constraints…';
+
+  const linkLabel = document.createElement('label');
+  linkLabel.className = 'field-label';
+  linkLabel.textContent = 'Link (optional)';
+  const linkInput = document.createElement('input');
+  linkInput.type = 'url';
+  linkInput.className = 'prompt-input';
+  linkInput.placeholder = 'e.g. https://example.com/reference-page';
+
+  const dropzone = document.createElement('div');
+  dropzone.className = 'dropzone';
+  dropzone.innerHTML = `<span><u>Click to browse</u> or drag files here</span><span class="dropzone-sub">Text-based files (.txt, .md, .csv, .json, code, etc.) get pulled in automatically. Everything stays in your browser.</span>`;
+
+  const fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.multiple = true;
+  fileInput.style.display = 'none';
+
+  const chipList = document.createElement('div');
+  chipList.className = 'file-chip-list';
+
+  let attachedFiles = [];
+  let fileIdCounter = 0;
+  const TEXT_EXTENSIONS = ['.txt','.md','.markdown','.csv','.tsv','.json','.log','.js','.jsx','.ts','.tsx','.py','.html','.htm','.css','.yaml','.yml','.xml','.rtf'];
+
+  function isTextFile(file){
+    if(file.type && file.type.startsWith('text/')) return true;
+    if(file.type === 'application/json') return true;
+    const lower = file.name.toLowerCase();
+    return TEXT_EXTENSIONS.some(ext => lower.endsWith(ext));
+  }
+
+  function renderChips(){
+    chipList.innerHTML = '';
+    attachedFiles.forEach(f => {
+      const chip = document.createElement('span');
+      chip.className = 'file-chip' + (f.unsupported ? ' unsupported' : '');
+      chip.innerHTML = `${escapeHtml(f.name)}${f.unsupported ? ' <i>(not readable here)</i>' : f.truncated ? ' <i>(truncated)</i>' : ''} <button type="button" aria-label="Remove ${escapeHtml(f.name)}">×</button>`;
+      chip.querySelector('button').addEventListener('click', () => {
+        attachedFiles = attachedFiles.filter(x => x.id !== f.id);
+        renderChips();
+      });
+      chipList.appendChild(chip);
+    });
+  }
+
+  function handleFiles(fileListLike){
+    Array.from(fileListLike).forEach(file => {
+      const id = ++fileIdCounter;
+      if(isTextFile(file)){
+        const reader = new FileReader();
+        reader.onload = () => {
+          let text = String(reader.result || '');
+          let truncated = false;
+          if(text.length > 4000){ text = text.slice(0, 4000); truncated = true; }
+          attachedFiles.push({ id, name: file.name, text, truncated, unsupported: false });
+          renderChips();
+        };
+        reader.onerror = () => {
+          attachedFiles.push({ id, name: file.name, text: null, unsupported: true });
+          renderChips();
+        };
+        reader.readAsText(file);
+      } else {
+        attachedFiles.push({ id, name: file.name, text: null, unsupported: true });
+        renderChips();
+      }
+    });
+  }
+
+  dropzone.addEventListener('click', () => fileInput.click());
+  dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+  dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropzone.classList.remove('dragover');
+    if(e.dataTransfer && e.dataTransfer.files) handleFiles(e.dataTransfer.files);
+  });
+  fileInput.addEventListener('change', () => {
+    handleFiles(fileInput.files);
+    fileInput.value = '';
+  });
+
+  const toneLabel = document.createElement('label');
+  toneLabel.className = 'field-label';
+  toneLabel.textContent = 'Tone, length, or format preferences?';
+  const toneInput = document.createElement('input');
+  toneInput.type = 'text';
+  toneInput.className = 'prompt-input';
+  toneInput.placeholder = 'e.g. friendly, under 200 words, bullet points';
+
+  const genErr = document.createElement('p');
+  genErr.className = 'prompt-error';
+  genErr.style.display = 'none';
+  genErr.textContent = 'Tell us what you need first — even a sentence works.';
+
+  const generateBtn = document.createElement('button');
+  generateBtn.className = 'btn-primary';
+  generateBtn.type = 'button';
+  generateBtn.textContent = 'Get my recommendation →';
+
+  const optionalDetails = buildOptionalDetails(
+    'Add context/files',
+    [contextInput, linkLabel, linkInput, dropzone, fileInput, chipList, toneLabel, toneInput],
+    'Background, files, a link, or tone/length — all optional'
+  );
+
+  const describeWrap = document.createElement('div');
+  describeWrap.className = 'describe-input-wrap';
+  describeWrap.appendChild(describeInput);
+  if(describeMicBtn) describeWrap.appendChild(describeMicBtn);
+  formStep.appendChild(describeLabel);
+  formStep.appendChild(describeWrap);
+  formStep.appendChild(strengthMeter);
+  formStep.appendChild(optionalDetails);
+  formStep.appendChild(genErr);
+  formStep.appendChild(generateBtn);
+
+  // clarify step: shown only when we genuinely can't tell what kind of task
+  // this is — never guess silently, always either match confidently or ask.
+  const clarifyStep = document.createElement('div');
+  clarifyStep.className = 'prompt-form';
+  clarifyStep.style.display = 'none';
+
+  const clarifyLabel = document.createElement('label');
+  clarifyLabel.className = 'field-label';
+  clarifyLabel.textContent = "We couldn't tell what kind of task this is — which is closest?";
+
+  const clarifyGrid = document.createElement('div');
+  clarifyGrid.className = 'chip-grid';
+
+  CATEGORY_OPTIONS.forEach(opt => {
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    chip.textContent = opt.label;
+    chip.addEventListener('click', () => goToFollowupOrFinish(opt.type));
+    clarifyGrid.appendChild(chip);
+  });
+
+  const clarifyBackBtn = document.createElement('button');
+  clarifyBackBtn.className = 'btn-ghost-mini';
+  clarifyBackBtn.type = 'button';
+  clarifyBackBtn.textContent = '← Back';
+  clarifyBackBtn.style.marginTop = '14px';
+  clarifyBackBtn.addEventListener('click', () => {
+    clarifyStep.style.display = 'none';
+    formStep.style.display = 'block';
+  });
+
+  clarifyStep.appendChild(clarifyLabel);
+  clarifyStep.appendChild(clarifyGrid);
+  clarifyStep.appendChild(clarifyBackBtn);
+
+  // follow-up step: a couple of type-specific questions to sharpen the
+  // prompt, shown once we know the type (from classifyText or the clarify
+  // step) but before we actually build anything. Rebuilt fresh each time
+  // since the type varies — unlike the fixed-category leaves, it isn't
+  // known until runtime here.
+  const followupStep = document.createElement('div');
+  followupStep.className = 'prompt-form';
+  followupStep.style.display = 'none';
+
+  function goToFollowupOrFinish(type){
+    const questions = FOLLOWUP_QUESTIONS[type] || [];
+    // Once the strength meter is green, the context box has already covered
+    // background/audience and tone/length — asking these again is redundant,
+    // so skip straight to building the prompt.
+    if(questions.length === 0 || promptStrength().level === 'strong'){
+      finishGeneration(type, []);
+      return;
+    }
+
+    followupStep.innerHTML = '';
+    const fLabel = document.createElement('label');
+    fLabel.className = 'field-label';
+    fLabel.textContent = 'A couple quick questions to sharpen the prompt:';
+    followupStep.appendChild(fLabel);
+
+    // The "topic" question (what this is actually about) is required, not
+    // optional — a description like "Friday blog post about the week" names
+    // a format but supplies no real subject matter, and without one, the
+    // final prompt is just a generic template Claude/ChatGPT/etc. has to
+    // guess its way through.
+    const followupInputs = [];
+    let topicEntry = null;
+    const topicErr = document.createElement('p');
+    topicErr.className = 'prompt-error';
+    topicErr.style.display = 'none';
+    questions.forEach(q => {
+      const isTopic = q.key === 'topic';
+      const qLabel = document.createElement('label');
+      qLabel.className = 'field-label';
+      qLabel.textContent = isTopic ? q.label : `${q.label} (optional)`;
+      const qInput = document.createElement('input');
+      qInput.type = 'text';
+      qInput.className = 'prompt-input';
+      qInput.placeholder = q.placeholder;
+      followupStep.appendChild(qLabel);
+      followupStep.appendChild(qInput);
+      const entry = { key: q.key, promptLabel: q.promptLabel || q.label, input: qInput };
+      followupInputs.push(entry);
+      if(isTopic){
+        topicEntry = entry;
+        followupStep.appendChild(topicErr);
+      }
+    });
+
+    const continueBtn = document.createElement('button');
+    continueBtn.className = 'btn-primary';
+    continueBtn.type = 'button';
+    continueBtn.textContent = 'Build my prompt →';
+    continueBtn.addEventListener('click', () => {
+      if(topicEntry && !topicEntry.input.value.trim()){
+        topicErr.textContent = "This is the one thing we can't guess for you — fill it in so the prompt has real substance instead of a generic template.";
+        topicErr.style.display = 'block';
+        topicEntry.input.focus();
+        return;
+      }
+      finishGeneration(type, followupInputs);
+    });
+    followupStep.appendChild(continueBtn);
+
+    const followupBackBtn = document.createElement('button');
+    followupBackBtn.className = 'btn-ghost-mini';
+    followupBackBtn.type = 'button';
+    followupBackBtn.textContent = '← Back';
+    followupBackBtn.style.marginTop = '10px';
+    followupBackBtn.addEventListener('click', () => {
+      followupStep.style.display = 'none';
+      formStep.style.display = 'block';
+    });
+    followupStep.appendChild(followupBackBtn);
+
+    formStep.style.display = 'none';
+    clarifyStep.style.display = 'none';
+    followupStep.style.display = 'block';
+  }
+
+  // result: recommendation card + prompt, filled in once they submit
+  const resultStep = document.createElement('div');
+  resultStep.className = 'prompt-result';
+  resultStep.style.display = 'none';
+
+  const recCard = document.createElement('div');
+  recCard.className = 'leaf';
+
+  const sensitivityNoteEl = document.createElement('div');
+  sensitivityNoteEl.className = 'sensitivity-note';
+  sensitivityNoteEl.style.display = 'none';
+
+  const tipEl = document.createElement('p');
+  tipEl.className = 'prompt-tip';
+
+  const outputArea = document.createElement('textarea');
+  outputArea.className = 'prompt-text';
+  outputArea.spellcheck = false;
+
+  const resultActions = document.createElement('div');
+  resultActions.className = 'prompt-actions';
+  const copyBtn = document.createElement('button');
+  copyBtn.className = 'btn-mini';
+  copyBtn.type = 'button';
+  copyBtn.textContent = 'Copy prompt';
+  copyBtn.addEventListener('click', () => copyPrompt(copyBtn, outputArea));
+  let currentTool = '';
+  const openToolBtn = document.createElement('button');
+  openToolBtn.type = 'button';
+  openToolBtn.className = 'btn-mini';
+  openToolBtn.style.display = 'none';
+  openToolBtn.addEventListener('click', () => {
+    const promptText = outputArea.value;
+    // window.open must be called synchronously, in direct response to the
+    // click, or browsers treat it as a popup and silently block it (often
+    // showing an empty/blank tab instead of an error) — that's why this
+    // happens FIRST, before the clipboard write, which can safely happen
+    // async right after.
+    window.open(buildToolLink(currentTool, promptText), '_blank', 'noopener,noreferrer');
+    navigator.clipboard.writeText(promptText).catch(() => {
+      try{ outputArea.focus(); outputArea.select(); document.execCommand('copy'); } catch(e2){ /* clipboard unavailable */ }
+    });
+    const original = openToolBtn.textContent;
+    openToolBtn.textContent = 'Copied — opening…';
+    setTimeout(() => { openToolBtn.textContent = original; }, 1600);
+  });
+  const editBtn = document.createElement('button');
+  editBtn.className = 'btn-ghost-mini';
+  editBtn.type = 'button';
+  editBtn.textContent = '← Edit my answers';
+  editBtn.addEventListener('click', () => {
+    resultStep.style.display = 'none';
+    clarifyStep.style.display = 'none';
+    followupStep.style.display = 'none';
+    formStep.style.display = 'block';
+    if(alwaysOpen) intro.style.display = '';
+  });
+  resultActions.appendChild(copyBtn);
+  resultActions.appendChild(openToolBtn);
+  resultActions.appendChild(editBtn);
+
+  const enhanceNote = document.createElement('p');
+  enhanceNote.className = 'note';
+  enhanceNote.style.display = 'none';
+
+  resultStep.appendChild(recCard);
+  resultStep.appendChild(sensitivityNoteEl);
+  resultStep.appendChild(tipEl);
+  resultStep.appendChild(outputArea);
+  resultStep.appendChild(resultActions);
+  resultStep.appendChild(enhanceNote);
+
+  let hasGenerated = false;
+
+  if(!alwaysOpen){
+    intro.tabIndex = 0;
+    intro.setAttribute('role', 'button');
+    intro.setAttribute('aria-expanded', 'false');
+
+    var toggleIntro = function(){
+      const isOpen = intro.classList.contains('expanded');
+      if(isOpen){
+        intro.classList.remove('expanded');
+        intro.setAttribute('aria-expanded', 'false');
+        formStep.style.display = 'none';
+        clarifyStep.style.display = 'none';
+        followupStep.style.display = 'none';
+        resultStep.style.display = 'none';
+      } else {
+        intro.classList.add('expanded');
+        intro.setAttribute('aria-expanded', 'true');
+        if(hasGenerated){
+          formStep.style.display = 'none';
+          clarifyStep.style.display = 'none';
+          followupStep.style.display = 'none';
+          resultStep.style.display = 'flex';
+        } else {
+          formStep.style.display = 'block';
+          clarifyStep.style.display = 'none';
+          followupStep.style.display = 'none';
+          resultStep.style.display = 'none';
+        }
+      }
+    };
+
+    intro.addEventListener('click', toggleIntro);
+    intro.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter' || e.key === ' '){
+        e.preventDefault();
+        toggleIntro();
+      }
+    });
+  }
+
+  // Everything after the type is known (either matched confidently from the
+  // description, or picked explicitly in the clarify step) funnels through
+  // here — so the tool + prompt are always built from a real type, never a
+  // silent guess.
+  async function finishGeneration(type, followupInputs){
+    followupInputs = followupInputs || [];
+    const describe = describeInput.value.trim();
+
+    // In always-open (single-box) mode, pull the live tools/industry/role
+    // setup from the top of the page every time — someone can change their
+    // stack or industry without reloading, and it should immediately affect
+    // both which tool gets recommended and how the prompt is framed.
+    let effectiveTools = tools;
+    let setupIndustry = '';
+    let setupRoles = [];
+    if(alwaysOpen){
+      const collected = collectInputs();
+      if(collected.tools && collected.tools.length) effectiveTools = collected.tools;
+      setupIndustry = collected.industry || '';
+      setupRoles = collected.roles || [];
+    }
+
+    const { tool, reason } = recommendForType(type, effectiveTools);
+    const color = toolColor(tool);
+
+    currentTool = tool;
+    openToolBtn.textContent = `Open ${tool} →`;
+    openToolBtn.style.display = 'inline-block';
+
+    recCard.innerHTML = `
+      <div class="tool-badge" style="background:${color}">${escapeHtml((tool||'?').slice(0,2).toUpperCase())}</div>
+      <div class="leaf-body">
+        <strong>Recommended for this task</strong>
+        <span><b style="color:${color}">${escapeHtml(tool)}</b> — ${escapeHtml(reason)}</span>
+      </div>
+    `;
+    tipEl.innerHTML = `<b style="color:${color}">${escapeHtml(tool)} tip:</b> ${escapeHtml(toolTip(tool))}`;
+
+    const sensitivityText = SENSITIVITY_NOTES[type];
+    if(sensitivityText){
+      sensitivityNoteEl.innerHTML = `<b>Heads up:</b> ${escapeHtml(sensitivityText)}`;
+      sensitivityNoteEl.style.display = 'block';
+    } else {
+      sensitivityNoteEl.style.display = 'none';
+    }
+
+    const followupLines = followupInputs
+      .map(f => ({ label: f.promptLabel, val: f.input.value.trim() }))
+      .filter(f => f.val)
+      .map(f => `${f.label}: ${f.val}`)
+      .join('\n');
+
+    const personalizationLines = [];
+    if(setupIndustry) personalizationLines.push(`Industry: ${setupIndustry}`);
+    if(setupRoles.length) personalizationLines.push(`Team role: ${setupRoles.join(', ')}`);
+    const personalizationBlock = personalizationLines.join('\n');
+
+    const linkLine = linkInput.value.trim() ? `Reference link: ${linkInput.value.trim()}` : '';
+    let combinedContext = [personalizationBlock, contextInput.value.trim(), linkLine, followupLines].filter(Boolean).join('\n\n');
+    attachedFiles.forEach(f => {
+      if(f.text){
+        combinedContext += `\n\n[Attached file: ${f.name}${f.truncated ? ', truncated' : ''}]\n${f.text}`;
+      } else if(f.unsupported){
+        combinedContext += `\n\n[Attached file: ${f.name} — couldn't read this file type in-browser; paste key details manually if needed]`;
+      }
+    });
+    combinedContext = combinedContext.trim();
+
+    const finalPrompt = buildFinalPrompt({
+      describe,
+      context: combinedContext,
+      tone: toneInput.value.trim(),
+      type,
+      tool
+    });
+
+    // Show the result screen right away with a placeholder while Claude
+    // writes the tailored version — the local template is only a fallback
+    // now, never shown as the "real" answer unless the AI call fails.
+    outputArea.value = 'Writing your tailored prompt…';
+    outputArea.rows = 3;
+    copyBtn.disabled = true;
+    enhanceNote.style.display = 'none';
+    formStep.style.display = 'none';
+    clarifyStep.style.display = 'none';
+    followupStep.style.display = 'none';
+    resultStep.style.display = 'flex';
+    if(alwaysOpen) intro.style.display = 'none';
+    hasGenerated = true;
+
+    const enhanced = await enhancePromptViaAI({
+      describe, context: combinedContext, type, tool,
+      currentPrompt: finalPrompt
+    });
+    const finalText = enhanced || finalPrompt;
+    outputArea.value = finalText;
+    outputArea.rows = Math.min(18, Math.max(6, finalText.split('\n').length));
+    copyBtn.disabled = false;
+    if(!enhanced){
+      enhanceNote.textContent = "The AI enhancer wasn't reachable just now, so this is the standard version — everything you entered is still in there.";
+      enhanceNote.style.display = 'block';
+    }
+  }
+
+  // Red until there's a full sentence or two describing the task. Yellow
+  // as detail builds. Green ("strong") once there's real detail overall —
+  // a thoroughly packed description, or tone/length covered — but that
+  // green bar doesn't fill all the way. It only goes to "perfect" (full
+  // bar) once audience/background is covered too, on top of everything
+  // else.
+  function promptStrength(){
+    const describeWords = countWords(describeInput.value);
+    const contextWords = countWords(contextInput.value);
+    const toneWords = countWords(toneInput.value);
+    const totalWords = describeWords + contextWords + toneWords;
+    const combined = `${describeInput.value} ${contextInput.value} ${toneInput.value}`.toLowerCase();
+    const hasAudience = contextWords >= 2 || AUDIENCE_KEYWORDS.some(k => combined.includes(k));
+    const hasToneLength = toneInput.value.trim().length > 0 || TONE_KEYWORDS.some(k => combined.includes(k));
+
+    if(describeWords < 5){
+      return { level: 'weak', pct: Math.min(25, describeWords / 5 * 25), label: 'Add a full sentence about what you need' };
+    }
+    const detailed = totalWords >= 12 || hasToneLength;
+    if(detailed && hasAudience){
+      return { level: 'perfect', pct: 100, label: 'Perfect — this will produce a great prompt' };
+    }
+    if(detailed){
+      return { level: 'strong', pct: 82, label: 'Strong — add background/audience/context for a perfect score' };
+    }
+    if(hasAudience || totalWords >= 8){
+      return { level: 'ok', pct: 65, label: 'Getting there — add a bit more detail' };
+    }
+    return { level: 'ok', pct: 40, label: 'Good start — add background/audience and tone/length below' };
+  }
+
+  function updateStrengthMeter(){
+    const { level, pct, label } = promptStrength();
+    strengthFill.style.width = `${Math.max(6, pct)}%`;
+    strengthStatus.textContent = label;
+    strengthStatus.className = `strength-status strength-${level}`;
+  }
+  describeInput.addEventListener('input', updateStrengthMeter);
+  contextInput.addEventListener('input', updateStrengthMeter);
+  toneInput.addEventListener('input', updateStrengthMeter);
+  updateStrengthMeter();
+
+  generateBtn.addEventListener('click', async () => {
+    const describe = describeInput.value.trim();
+    if(!describe){
+      genErr.textContent = 'Tell us what you need first — even a sentence works.';
+      genErr.style.display = 'block';
+      describeInput.focus();
+      return;
+    }
+    if(promptStrength().level === 'weak'){
+      genErr.textContent = "That's a bit thin to build a strong prompt from — add a few more words above (the strength bar turns yellow, then green, as you add detail).";
+      genErr.style.display = 'block';
+      describeInput.focus();
+      return;
+    }
+    genErr.style.display = 'none';
+
+    const originalLabel = generateBtn.textContent;
+    generateBtn.disabled = true;
+    generateBtn.textContent = 'Thinking…';
+
+    let guessedType = null;
+    try{
+      guessedType = await classifyViaAI(describe);
+    } finally {
+      generateBtn.disabled = false;
+      generateBtn.textContent = originalLabel;
+    }
+
+    if(!guessedType){
+      guessedType = classifyText(describe); // AI unavailable or unsure — fall back to local rules
+    }
+
+    if(guessedType){
+      goToFollowupOrFinish(guessedType);
+      return;
+    }
+
+    // No confident match from AI or local rules — don't guess. Ask instead.
+    formStep.style.display = 'none';
+    clarifyStep.style.display = 'block';
+  });
+
+  wrap.appendChild(intro);
+  wrap.appendChild(formStep);
+  wrap.appendChild(clarifyStep);
+  wrap.appendChild(followupStep);
+  wrap.appendChild(resultStep);
+  return wrap;
+}
+
+async function copyPrompt(btn, textarea){
+  textarea.focus();
+  textarea.select();
+  let ok = false;
+  try{
+    await navigator.clipboard.writeText(textarea.value);
+    ok = true;
+  } catch(e){
+    try{ ok = document.execCommand('copy'); } catch(e2){ ok = false; }
+  }
+  const original = 'Copy prompt';
+  btn.textContent = ok ? 'Copied ✓' : 'Press ⌘/Ctrl+C';
+  setTimeout(() => { btn.textContent = original; }, 1600);
+}
+
+function startOver(){
+  document.getElementById('tree-section').style.display = 'none';
+  document.getElementById('form-section').style.display = 'block';
+  hideError();
+}
+
+// Runs last so every element/function above already exists. Restoring a
+// returning team's selections happens first — applyClientConfig() below
+// will override any of it that CLIENT_CONFIG explicitly sets.
+restoreFormState();
+applyClientConfig();
+
+// The whole app is now a single always-open task box — no tool/industry/role
+// wizard and no category tree to browse first. Recommendations are made
+// against every major tool by default since we no longer ask the user which
+// ones they have access to.
+const DEFAULT_TOOLS = ["Claude", "ChatGPT", "Microsoft Copilot", "Perplexity", "Gemini"];
+const taskBoxMount = document.getElementById('task-box-mount');
+if(taskBoxMount){
+  taskBoxMount.appendChild(buildDynamicLeaf({ label: "What do you need to do?" }, DEFAULT_TOOLS, true));
+}
+
+// ---- setup: friendly popup shown once, reopenable via "Edit" ----
+const SETUP_DISMISSED_KEY = STORAGE_KEY + '.dismissed';
+
+function openSetupModal(){
+  const modal = document.getElementById('setup-modal');
+  if(modal) modal.style.display = 'flex';
+}
+function closeSetupModal(){
+  const modal = document.getElementById('setup-modal');
+  if(modal) modal.style.display = 'none';
+  try{ localStorage.setItem(SETUP_DISMISSED_KEY, '1'); } catch(e){ /* ignore */ }
+}
+
+const setupEditBtn = document.getElementById('setup-edit-btn');
+if(setupEditBtn) setupEditBtn.addEventListener('click', openSetupModal);
+
+// It now lives as a plain link below the whole card (not inside it), so
+// there's nothing to move — just reveal it once the task box is live.
+if(setupEditBtn) setupEditBtn.style.display = '';
+
+const setupModalSkip = document.getElementById('setup-modal-skip');
+if(setupModalSkip) setupModalSkip.addEventListener('click', closeSetupModal);
+
+const setupModalContinue = document.getElementById('setup-modal-continue');
+if(setupModalContinue) setupModalContinue.addEventListener('click', () => {
+  const { tools } = collectInputs();
+  const errEl = document.getElementById('setup-modal-error');
+  if(tools.length === 0){
+    if(errEl){ errEl.textContent = 'Pick at least one AI tool your team uses (or Skip for now).'; errEl.style.display = 'block'; }
+    return;
+  }
+  if(errEl) errEl.style.display = 'none';
+  saveFormState();
+  closeSetupModal();
+});
+
+// Pop it open right away on a first visit; once dismissed (either finished
+// or skipped) it stays closed on every future visit unless reopened via
+// the "Edit" link on the main page.
+let setupAlreadyDismissed = false;
+try{ setupAlreadyDismissed = localStorage.getItem(SETUP_DISMISSED_KEY) === '1'; } catch(e){ /* ignore */ }
+if(!setupAlreadyDismissed){
+  openSetupModal();
+}
+</script>
+</body>
+</html>
