@@ -1663,7 +1663,12 @@ const TOOL_PREFERENCE = {
   coding:     ["Claude", "ChatGPT", "Microsoft Copilot"],
   data:       ["ChatGPT", "Claude", "Gemini"],
   brainstorm: ["ChatGPT", "Claude", "Gemini"],
-  support:    ["ChatGPT", "Claude", "Microsoft Copilot"]
+  support:    ["ChatGPT", "Claude", "Microsoft Copilot"],
+  // Gemini (Google Slides) and Copilot (PowerPoint/Designer) can actually
+  // generate an editable deck. Claude and ChatGPT can only hand back an
+  // outline/text to paste in yourself, so they're ranked below the two
+  // tools that produce a real, built deck.
+  slides:     ["Gemini", "Microsoft Copilot", "ChatGPT", "Claude"]
 };
 
 const TYPE_INFO = {
@@ -1677,6 +1682,9 @@ const TYPE_INFO = {
   data:       (t) => `${t} is handy for exploring datasets and building quick analyses.`,
   brainstorm: (t) => `${t} is great for rapid idea generation and back-and-forth brainstorming.`,
   support:    (t) => `${t} works well for drafting quick, clear customer responses.`,
+  slides:     (t) => (t === 'Gemini' || t === 'Microsoft Copilot')
+    ? `${t} can build the actual slides for you (${t === 'Gemini' ? 'directly in Google Slides' : 'directly in PowerPoint'}), not just an outline.`
+    : `${t} will write strong slide-by-slide content, but can't build the deck itself — you'll paste it in yourself. If Gemini or Microsoft Copilot is in your stack, pick one of those instead for an actual built deck.`,
   _default:   (t) => `${t} is a flexible, general-purpose choice for a task that doesn't fit a specific category.`
 };
 
@@ -1707,6 +1715,7 @@ const CATEGORY_OPTIONS = [
   { label: "Analyze data", type: "data" },
   { label: "Brainstorm ideas", type: "brainstorm" },
   { label: "Draft a customer support reply", type: "support" },
+  { label: "Build a slide deck or presentation", type: "slides" },
   { label: "None of these — just help me generally", type: "_default" }
 ];
 
@@ -1769,6 +1778,10 @@ const FOLLOWUP_QUESTIONS = {
   ],
   support: [
     { key: 'situation', label: "What's the situation? What happened?", promptLabel: 'Situation', placeholder: "e.g. customer's order arrived damaged, asking for a refund" }
+  ],
+  slides: [
+    { key: 'slidecount', label: 'About how many slides?', promptLabel: 'Number of slides', placeholder: 'e.g. 8-10' },
+    { key: 'audience', label: "Who's this for?", promptLabel: 'Audience', placeholder: 'e.g. leadership, a client, the whole team' }
   ]
 };
 
@@ -1829,7 +1842,7 @@ const TASK_LIBRARY = {
     ]},
     { label: "Campaigns", tasks: [
       { label: "Brainstorm campaign ideas", type: "brainstorm" },
-      { label: "Build a slide outline", type: "writing" }
+      { label: "Build a slide deck", type: "slides" }
     ]}
   ],
   "Healthcare": [
@@ -1873,7 +1886,7 @@ const TASK_LIBRARY = {
   ],
   "Consulting": [
     { label: "Deliverables", tasks: [
-      { label: "Build a slide outline", type: "writing" },
+      { label: "Build a slide deck", type: "slides" },
       { label: "Summarize a client report", type: "summarize" }
     ]},
     { label: "Research", tasks: [
@@ -1966,6 +1979,7 @@ const DESCRIBE_PLACEHOLDER = {
   data:       "e.g. Monthly sales data, trying to find why Q2 revenue dropped",
   brainstorm: "e.g. Ideas for a referral program for existing customers",
   support:    "e.g. A reply to a customer asking for a refund outside our policy window",
+  slides:     "e.g. An 8-slide deck pitching our Q3 marketing plan to leadership",
   _default:   "Describe what you want help creating or figuring out"
 };
 
@@ -2043,6 +2057,10 @@ Work through the numbers step by step before giving your conclusions.`
 - Acknowledges the issue directly
 - Resolves it or explains next steps clearly${a.tone ? `\n- Matches: ${a.tone}` : ''}
 - Stays concise`
+  },
+  slides: {
+    role: null,
+    instructions: (a) => `Please build this out as a slide deck — one slide per idea, with a short headline and 2-4 supporting bullets each, plus a suggested visual or layout note where it helps.${a.tone ? line('Additional preferences', a.tone) : ''} If you can generate the actual slides directly (for example, in Google Slides or PowerPoint), build them there rather than just describing them. If not, give me a clean slide-by-slide breakdown I can paste in myself.`
   },
   _default: {
     role: null,
@@ -2142,7 +2160,8 @@ const KEYWORD_MAP = {
   coding:     ["code", "function", "bug", "debug", "script", "program", "python", "javascript", "api", "pull request", "sql query", "algorithm", "unit test", "refactor", "error message", "stack trace"],
   data:       ["data", "spreadsheet", "csv", "dataset", "analyze numbers", "chart", "trend in the numbers", "excel", "pivot table", "sales numbers", "metrics", "kpi", "dashboard", "forecast"],
   brainstorm: ["brainstorm", "ideas for", "ideate", "think of ideas", "list of ideas", "campaign ideas", "marketing campaign", "social media campaign", "name ideas", "concept for", "angles for", "options for", "campaign"],
-  support:    ["customer", "refund", "complaint", "support ticket", "reply to a customer", "customer service", "apology to a client", "cancellation request", "billing issue"]
+  support:    ["customer", "refund", "complaint", "support ticket", "reply to a customer", "customer service", "apology to a client", "cancellation request", "billing issue"],
+  slides:     ["slide deck", "slides", "slide outline", "powerpoint", "power point", "google slides", "presentation", "pitch deck", "deck for", "build a deck", "make a deck", "deck to"]
 };
 
 // Turns text into a word set for the fallback matcher below. Adds a crude
