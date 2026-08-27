@@ -3412,16 +3412,26 @@ function buildDynamicLeaf(node, tools, alwaysOpen){
     generateBtn.disabled = true;
     generateBtn.textContent = 'Thinking…';
 
-    let guessedType = null;
-    try{
-      guessedType = await classifyViaAI(describe);
-    } finally {
-      generateBtn.disabled = false;
-      generateBtn.textContent = originalLabel;
-    }
+    // Local keyword rules run FIRST, not the AI webhook. The webhook lives on
+    // Make.com and has its own hardcoded idea of what the valid task types
+    // are — it doesn't know about types added here (like "slides") until
+    // that scenario is edited separately, so trusting it first can silently
+    // override a category that was just added or fixed in this file. Local
+    // rules are instant, free, and always in sync with this file, so they
+    // get first say; the AI webhook is only consulted when local rules
+    // genuinely can't tell (score 0 across every type).
+    let guessedType = classifyText(describe);
 
     if(!guessedType){
-      guessedType = classifyText(describe); // AI unavailable or unsure — fall back to local rules
+      try{
+        guessedType = await classifyViaAI(describe);
+      } finally {
+        generateBtn.disabled = false;
+        generateBtn.textContent = originalLabel;
+      }
+    } else {
+      generateBtn.disabled = false;
+      generateBtn.textContent = originalLabel;
     }
 
     if(guessedType){
