@@ -1360,8 +1360,24 @@ function toolUrl(name){
 // to the clipboard either way, so pasting it in still only takes one step.
 const URL_PREFILL_MAX_LEN = 1800;
 
-function buildToolLink(name, promptText){
+// Some task types have a tool-specific "real" surface that's different from
+// that tool's default chat app — most notably: Gemini's actual deck-building
+// feature lives inside a Google Slides file, not gemini.google.com's general
+// chat, and Copilot's equivalent lives inside PowerPoint, not
+// copilot.microsoft.com. Sending someone to the general chat app for these
+// gets them an outline instead of a built deck (see TYPE_INFO.slides above).
+// Keyed as "type:tool" (lowercased) so this only overrides that specific
+// type + tool pairing, not that tool's URL everywhere else.
+const TYPE_TOOL_URL_OVERRIDES = {
+  "slides:gemini": "https://slides.new",
+  "slides:microsoft copilot": "https://powerpoint.cloud.microsoft/create/en/copilot-in-powerpoint/",
+  "slides:copilot": "https://powerpoint.cloud.microsoft/create/en/copilot-in-powerpoint/"
+};
+
+function buildToolLink(name, promptText, type){
   const key = (name || '').toLowerCase().trim();
+  const overrideKey = `${(type || '').toLowerCase().trim()}:${key}`;
+  if(TYPE_TOOL_URL_OVERRIDES[overrideKey]) return TYPE_TOOL_URL_OVERRIDES[overrideKey];
   const encoded = encodeURIComponent(promptText || '');
   if(encoded.length < URL_PREFILL_MAX_LEN){
     if(key === 'chatgpt') return `https://chatgpt.com/?q=${encoded}`;
@@ -1682,9 +1698,22 @@ const TYPE_INFO = {
   data:       (t) => `${t} is handy for exploring datasets and building quick analyses.`,
   brainstorm: (t) => `${t} is great for rapid idea generation and back-and-forth brainstorming.`,
   support:    (t) => `${t} works well for drafting quick, clear customer responses.`,
-  slides:     (t) => (t === 'Gemini' || t === 'Microsoft Copilot')
-    ? `${t} can build the actual slides for you (${t === 'Gemini' ? 'directly in Google Slides' : 'directly in PowerPoint'}), not just an outline.`
-    : `${t} will write strong slide-by-slide content, but can't build the deck itself — you'll paste it in yourself. If Gemini or Microsoft Copilot is in your stack, pick one of those instead for an actual built deck.`,
+  // Important: the actual deck-building feature for both Gemini and Copilot
+  // lives INSIDE Google Slides / PowerPoint, not in their general chat apps
+  // (gemini.google.com, copilot.microsoft.com) — pasting this prompt into
+  // general chat there only gets you a written outline, same as ChatGPT.
+  // The reason text has to say that explicitly, and the "Open" button
+  // (see buildToolLink / TYPE_TOOL_URL_OVERRIDES below) sends people to the
+  // right surface instead of the generic chat.
+  slides:     (t) => {
+    if(t === 'Gemini'){
+      return `Gemini can build the actual slides for you — but not from regular Gemini chat. Open a blank Google Slides file, click the Gemini icon in the toolbar, and paste this prompt there (requires a paid Gemini/Google One AI plan).`;
+    }
+    if(t === 'Microsoft Copilot'){
+      return `Copilot can build the actual slides for you — but not from regular Copilot chat. Open a blank PowerPoint file, click the Copilot icon, and paste this prompt there (requires Microsoft 365 or Copilot Pro).`;
+    }
+    return `${t} will write strong slide-by-slide content, but can't build the deck itself — you'll paste it in yourself. If Gemini or Microsoft Copilot is in your stack, pick one of those instead for an actual built deck.`;
+  },
   _default:   (t) => `${t} is a flexible, general-purpose choice for a task that doesn't fit a specific category.`
 };
 
@@ -3159,6 +3188,7 @@ function buildDynamicLeaf(node, tools, alwaysOpen){
   copyBtn.textContent = 'Copy prompt';
   copyBtn.addEventListener('click', () => copyPrompt(copyBtn, outputArea));
   let currentTool = '';
+  let currentType = '';
   const openToolBtn = document.createElement('button');
   openToolBtn.type = 'button';
   openToolBtn.className = 'btn-mini';
@@ -3170,7 +3200,7 @@ function buildDynamicLeaf(node, tools, alwaysOpen){
     // showing an empty/blank tab instead of an error) — that's why this
     // happens FIRST, before the clipboard write, which can safely happen
     // async right after.
-    window.open(buildToolLink(currentTool, promptText), '_blank', 'noopener,noreferrer');
+    window.open(buildToolLink(currentTool, promptText, currentType), '_blank', 'noopener,noreferrer');
     navigator.clipboard.writeText(promptText).catch(() => {
       try{ outputArea.focus(); outputArea.select(); document.execCommand('copy'); } catch(e2){ /* clipboard unavailable */ }
     });
@@ -3272,7 +3302,14 @@ function buildDynamicLeaf(node, tools, alwaysOpen){
     const color = toolColor(tool);
 
     currentTool = tool;
-    openToolBtn.textContent = `Open ${tool} →`;
+    currentType = type;
+    // For slides+Gemini/Copilot the button actually opens a blank Slides/
+    // PowerPoint file, not the tool's chat app — label it as such so nobody
+    // is confused when a document opens instead of a chat window.
+    const toolKey = (tool || '').toLowerCase().trim();
+    openToolBtn.textContent = (type === 'slides' && toolKey === 'gemini') ? 'Open Google Slides →'
+      : (type === 'slides' && toolKey === 'microsoft copilot') ? 'Open PowerPoint →'
+      : `Open ${tool} →`;
     openToolBtn.style.display = 'inline-block';
 
     recCard.innerHTML = `
