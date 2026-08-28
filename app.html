@@ -2185,7 +2185,12 @@ const KEYWORD_MAP = {
   data:       ["data", "spreadsheet", "csv", "dataset", "analyze numbers", "chart", "trend in the numbers", "excel", "pivot table", "sales numbers", "metrics", "kpi", "dashboard", "forecast"],
   brainstorm: ["brainstorm", "ideas for", "ideate", "think of ideas", "list of ideas", "campaign ideas", "marketing campaign", "social media campaign", "name ideas", "concept for", "angles for", "options for", "campaign"],
   support:    ["customer", "refund", "complaint", "support ticket", "reply to a customer", "customer service", "apology to a client", "cancellation request", "billing issue"],
-  slides:     ["slide deck", "slides", "slide outline", "powerpoint", "power point", "google slides", "presentation", "pitch deck", "deck for", "build a deck", "make a deck", "deck to"]
+  // "deck", "slides", "presentation" etc. are included standalone (not just
+  // inside phrases like "build a deck") so any request that's clearly about
+  // a deck/presentation/slides gets caught, however it's phrased — Gemini is
+  // ranked #1 for this type (see TOOL_PREFERENCE.slides) and routes straight
+  // to Canvas mode (see buildToolLink) whenever it's in the user's stack.
+  slides:     ["slide deck", "slides", "slide", "slideshow", "slide show", "slide outline", "powerpoint", "power point", "google slides", "keynote", "presentation", "pitch deck", "sales deck", "investor deck", "board deck", "deck", "deck for", "build a deck", "make a deck", "deck to"]
 };
 
 // Turns text into a word set for the fallback matcher below. Adds a crude
