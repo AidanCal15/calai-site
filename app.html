@@ -678,7 +678,17 @@
     border-radius:10px;
     resize:vertical;
   }
-  .prompt-actions{margin-top:0;display:flex;gap:8px;}
+  /* justify-content/align-items center this row (it was left-aligned and
+     drifting off-center before, since flex containers ignore the parent's
+     text-align:center). The .btn-ghost-mini override below matches its
+     padding/font-size to .btn-mini specifically in this row — those two
+     classes are legitimately different sizes elsewhere (primary vs. a
+     smaller secondary action like "Skip"), but here all three buttons
+     (Copy prompt / Open [tool] / Edit my answers) are peer actions, so a
+     smaller "Edit my answers" pill next to two full-size ones read as
+     uneven rather than as an intentional hierarchy. */
+  .prompt-actions{margin-top:0;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center;}
+  .prompt-actions .btn-ghost-mini{padding:9px 19px;font-size:14px;}
   .prompt-result{display:flex;flex-direction:column;gap:24px;}
   .prompt-result > .note{margin-top:0;}
 
@@ -882,6 +892,14 @@
   .sensitivity-note b{color:var(--accent-amber);}
 
   .node:focus-visible, .dynamic-intro:focus-visible{
+    outline:2px solid var(--teal-glow);
+    outline-offset:2px;
+  }
+  /* Buttons had no themed focus style, so a clicked/tabbed-to button (e.g.
+     "Open Gemini") fell back to the browser's default blue focus ring —
+     that's what made it look like a different color/size next to the
+     others in a screenshot. Themed to match the rest of the app instead. */
+  .btn-primary:focus-visible, .btn-ghost:focus-visible, .btn-mini:focus-visible, .btn-ghost-mini:focus-visible{
     outline:2px solid var(--teal-glow);
     outline-offset:2px;
   }
