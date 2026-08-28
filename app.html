@@ -1360,19 +1360,20 @@ function toolUrl(name){
 // to the clipboard either way, so pasting it in still only takes one step.
 const URL_PREFILL_MAX_LEN = 1800;
 
-// NOTE on slides+Gemini/Copilot: earlier this sent people straight to a
-// blank Google Slides / PowerPoint file, on the assumption that the
-// AI-builds-a-full-deck feature would just be there. It isn't, for most
-// people — per Google's and Microsoft's own docs, native deck generation is
-// gated behind a paid Gemini AI Pro/Ultra or Workspace Business+/Enterprise
-// plan (Gemini), or Microsoft 365 Personal/Family or Copilot Pro (Copilot).
-// Landing an ungated user on an empty document looked like the app was
-// broken. So the "Open" button always goes to the tool's normal chat app
-// (reliable for everyone, gives at least an outline) — the native-deck path
-// is explained as a conditional tip in TYPE_INFO.slides instead of being the
-// default click action.
-function buildToolLink(name, promptText){
+// NOTE on slides+Gemini: earlier this sent people to a blank Google Slides
+// file, on the assumption that a paid, Workspace-gated Slides feature would
+// just be there. It usually isn't. What actually works (confirmed): Gemini's
+// free "Canvas" mode, right in the normal chat app, builds a real navigable
+// deck with an Export-to-Slides button. gemini.google.com/canvas opens
+// straight into that mode already toggled on — Gemini has no URL param for
+// prefilling the prompt itself, so the prompt still has to be pasted (it's
+// already copied to the clipboard by the click handler below).
+// Copilot has no equivalent free/instant deep link — its version only runs
+// from inside PowerPoint itself and needs a paid plan, so it still just
+// opens Copilot's normal chat (see TYPE_INFO.slides for the manual steps).
+function buildToolLink(name, promptText, type){
   const key = (name || '').toLowerCase().trim();
+  if(type === 'slides' && key === 'gemini') return 'https://gemini.google.com/canvas';
   const encoded = encodeURIComponent(promptText || '');
   if(encoded.length < URL_PREFILL_MAX_LEN){
     if(key === 'chatgpt') return `https://chatgpt.com/?q=${encoded}`;
@@ -1693,22 +1694,20 @@ const TYPE_INFO = {
   data:       (t) => `${t} is handy for exploring datasets and building quick analyses.`,
   brainstorm: (t) => `${t} is great for rapid idea generation and back-and-forth brainstorming.`,
   support:    (t) => `${t} works well for drafting quick, clear customer responses.`,
-  // Native, fully-built-deck generation is a real feature for both Gemini
-  // and Copilot, but it's gated — per Google's and Microsoft's own docs it
-  // requires a paid Gemini AI Pro/Ultra or Workspace Business+/Enterprise
-  // plan (Gemini), or Microsoft 365 Personal/Family or Copilot Pro
-  // (Copilot). It also only runs from inside a Google Slides / PowerPoint
-  // file, not from the tool's general chat — the "Open" button below always
-  // opens general chat (reliable for everyone), so the native path has to be
-  // spelled out here as a conditional extra step, not assumed to just work.
+  // Gemini's "Canvas" mode builds a real, navigable deck right inside the
+  // chat (with an Export-to-Slides button) — it's a free feature, no paid
+  // plan needed, just has to be switched on in the toolbar before the
+  // prompt is sent (confirmed working — see chat history). Copilot's
+  // equivalent is less convenient: it only runs from inside PowerPoint
+  // itself, and needs Microsoft 365 or Copilot Pro.
   slides:     (t) => {
     if(t === 'Gemini'){
-      return `Gemini writes strong slide content like the rest, and if you're on a paid Gemini AI Pro/Ultra or Workspace plan, it can also build the actual deck: open a new Google Slides file (not this chat) and use the Gemini icon there instead of pasting below.`;
+      return `Gemini can build the actual deck for you, right in the chat — the button below opens Gemini already in Canvas mode (free, no paid plan needed), so just paste the prompt in and send it. Gemini will generate real, navigable slides with an Export-to-Slides button, not just a written outline.`;
     }
     if(t === 'Microsoft Copilot'){
-      return `Copilot writes strong slide content like the rest, and if you're on Microsoft 365 or Copilot Pro, it can also build the actual deck: open a new PowerPoint file (not this chat) and use the Copilot icon there instead of pasting below.`;
+      return `Copilot can build the actual deck for you, but only from inside PowerPoint (not this chat), and only with Microsoft 365 or Copilot Pro: open a new PowerPoint file, click the Copilot icon, and paste this prompt there.`;
     }
-    return `${t} will write strong slide-by-slide content, but can't build the deck itself — you'll paste it in yourself. Gemini (with a paid AI Pro/Ultra or Workspace plan) or Copilot (with Microsoft 365/Copilot Pro) can build the actual deck from inside Google Slides or PowerPoint, if either is an option for you.`;
+    return `${t} will write strong slide-by-slide content, but can't build the deck itself — you'll paste it in yourself. Gemini can build the actual deck for free using its Canvas mode — worth adding to your stack if slide decks come up often.`;
   },
   _default:   (t) => `${t} is a flexible, general-purpose choice for a task that doesn't fit a specific category.`
 };
@@ -3184,6 +3183,7 @@ function buildDynamicLeaf(node, tools, alwaysOpen){
   copyBtn.textContent = 'Copy prompt';
   copyBtn.addEventListener('click', () => copyPrompt(copyBtn, outputArea));
   let currentTool = '';
+  let currentType = '';
   const openToolBtn = document.createElement('button');
   openToolBtn.type = 'button';
   openToolBtn.className = 'btn-mini';
@@ -3195,7 +3195,7 @@ function buildDynamicLeaf(node, tools, alwaysOpen){
     // showing an empty/blank tab instead of an error) — that's why this
     // happens FIRST, before the clipboard write, which can safely happen
     // async right after.
-    window.open(buildToolLink(currentTool, promptText), '_blank', 'noopener,noreferrer');
+    window.open(buildToolLink(currentTool, promptText, currentType), '_blank', 'noopener,noreferrer');
     navigator.clipboard.writeText(promptText).catch(() => {
       try{ outputArea.focus(); outputArea.select(); document.execCommand('copy'); } catch(e2){ /* clipboard unavailable */ }
     });
@@ -3297,6 +3297,7 @@ function buildDynamicLeaf(node, tools, alwaysOpen){
     const color = toolColor(tool);
 
     currentTool = tool;
+    currentType = type;
     openToolBtn.textContent = `Open ${tool} →`;
     openToolBtn.style.display = 'inline-block';
 
