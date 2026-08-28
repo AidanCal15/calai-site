@@ -1676,11 +1676,20 @@ const TOOL_PREFERENCE = {
   data:       ["ChatGPT", "Claude", "Gemini"],
   brainstorm: ["ChatGPT", "Claude", "Gemini"],
   support:    ["ChatGPT", "Claude", "Microsoft Copilot"],
-  // Gemini (Google Slides) and Copilot (PowerPoint/Designer) can actually
-  // generate an editable deck. Claude and ChatGPT can only hand back an
-  // outline/text to paste in yourself, so they're ranked below the two
-  // tools that produce a real, built deck.
-  slides:     ["Gemini", "Microsoft Copilot", "ChatGPT", "Claude"]
+  // All four can now produce an actual file, not just a written outline —
+  // ranked by how reliable/convenient that actually is (verified, not
+  // assumed — see TYPE_INFO.slides for sourcing):
+  // 1. Gemini — free "Canvas" mode, in normal chat, confirmed working,
+  //    one-click Export to Slides.
+  // 2. Claude — file creation (real .pptx) opened to every user, free tier
+  //    included, since Feb 2026.
+  // 3. ChatGPT — can generate a downloadable .pptx even on free tier, but
+  //    quality is consistently reported as rougher/more basic.
+  // 4. Microsoft Copilot — real deck generation exists but is the least
+  //    reliable/convenient: gated behind a Microsoft 365/Copilot Pro plan,
+  //    saves to OneDrive rather than downloading directly, and has
+  //    documented reliability complaints even for eligible users.
+  slides:     ["Gemini", "Claude", "ChatGPT", "Microsoft Copilot"]
 };
 
 const TYPE_INFO = {
@@ -1704,10 +1713,16 @@ const TYPE_INFO = {
     if(t === 'Gemini'){
       return `Gemini can build the actual deck for you, right in the chat — the button below opens Gemini already in Canvas mode (free, no paid plan needed), so just paste the prompt in and send it. Gemini will generate real, navigable slides with an Export-to-Slides button, not just a written outline.`;
     }
-    if(t === 'Microsoft Copilot'){
-      return `Copilot can build the actual deck for you, but only from inside PowerPoint (not this chat), and only with Microsoft 365 or Copilot Pro: open a new PowerPoint file, click the Copilot icon, and paste this prompt there.`;
+    if(t === 'Claude'){
+      return `Claude can build the actual deck for you too — file creation (including real .pptx files) is open to every Claude user, free tier included. Paste the prompt below and ask for the file directly (it already does) — you'll get a real, downloadable PowerPoint, not a description of one.`;
     }
-    return `${t} will write strong slide-by-slide content, but can't build the deck itself — you'll paste it in yourself. Gemini can build the actual deck for free using its Canvas mode — worth adding to your stack if slide decks come up often.`;
+    if(t === 'ChatGPT'){
+      return `ChatGPT can also generate a real, downloadable .pptx file, even on the free tier — it just has to be asked for explicitly (the prompt below does this). Expect rougher formatting than Gemini or Claude and more manual cleanup, but it's a real file, not just an outline.`;
+    }
+    if(t === 'Microsoft Copilot'){
+      return `Copilot can build a real deck too, but it's the least convenient option: it needs Microsoft 365 or Copilot Pro, saves to OneDrive rather than downloading directly, and has known reliability issues. Open a new PowerPoint file, click the Copilot icon, and paste this prompt there — it's more reliable from inside PowerPoint itself than from copilot.microsoft.com.`;
+    }
+    return `${t} is a flexible choice for slide content — ask it directly to create a downloadable file rather than just describe one.`;
   },
   _default:   (t) => `${t} is a flexible, general-purpose choice for a task that doesn't fit a specific category.`
 };
@@ -2084,7 +2099,7 @@ Work through the numbers step by step before giving your conclusions.`
   },
   slides: {
     role: null,
-    instructions: (a) => `Please build this out as a slide deck — one slide per idea, with a short headline and 2-4 supporting bullets each, plus a suggested visual or layout note where it helps.${a.tone ? line('Additional preferences', a.tone) : ''} If you can generate the actual slides directly (for example, in Google Slides or PowerPoint), build them there rather than just describing them. If not, give me a clean slide-by-slide breakdown I can paste in myself.`
+    instructions: (a) => `Please build this as an actual slide deck file I can download or export — not a written description or outline. If you're able to create and hand me a real file (a .pptx, a Google Slides presentation, or an in-chat interactive deck with an export option), create it now — don't just describe what the slides would contain. One slide per idea, with a short headline and 2-4 supporting bullets each, plus a suggested visual or layout note where it helps.${a.tone ? line('Additional preferences', a.tone) : ''} Only fall back to a plain slide-by-slide text breakdown if you genuinely have no way to produce a real file.`
   },
   _default: {
     role: null,
