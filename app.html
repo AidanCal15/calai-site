@@ -461,6 +461,84 @@
     animation:fadeUp .35s cubic-bezier(.16,1,.3,1) both;
   }
 
+  /* library — a running history of every prompt generated, saved to
+     localStorage automatically (see LIBRARY_STORAGE_KEY), so someone can
+     come back later and re-read or re-open something they built before.
+     Same overlay/modal-card pattern as #setup-modal, just wider (there's
+     real prompt text to read, not a short form) and with its own list. */
+  #library-modal{
+    display:none;
+    position:fixed;inset:0;
+    background:rgba(4,4,8,.72);
+    backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);
+    align-items:center;justify-content:center;
+    z-index:200;
+    padding:20px;
+    animation:fadeUp .25s ease both;
+  }
+  #library-modal .modal-card{
+    background:var(--bg-1);
+    border:1px solid var(--card-border);
+    border-radius:var(--radius);
+    padding:32px;
+    max-width:680px;
+    width:100%;
+    max-height:88vh;
+    overflow-y:auto;
+    box-shadow:0 30px 80px -20px rgba(0,0,0,.65);
+    animation:fadeUp .35s cubic-bezier(.16,1,.3,1) both;
+  }
+  .library-header{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:6px;
+  }
+  .library-header h2{margin:0;font-size:22px;font-weight:800;color:var(--text-0);}
+  .library-sub{margin:0 0 22px;color:var(--text-1);font-size:14px;line-height:1.5;}
+  .library-empty{
+    text-align:center;padding:40px 20px;color:var(--text-2);font-size:14px;line-height:1.6;
+  }
+  .library-list{display:flex;flex-direction:column;gap:12px;}
+  .library-entry{
+    background:var(--surface);
+    border:1px solid var(--card-border);
+    border-radius:14px;
+    padding:16px 18px;
+  }
+  .library-entry-top{
+    display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px;
+  }
+  .library-entry-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0;}
+  .library-tool-badge{
+    flex-shrink:0;width:26px;height:26px;border-radius:8px;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:11px;color:#0a0a0f;
+  }
+  .library-entry-task{font-size:14px;font-weight:600;color:var(--text-0);}
+  .library-entry-date{font-size:11.5px;color:var(--text-2);flex-shrink:0;white-space:nowrap;}
+  .library-entry-prompt{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:12px;line-height:1.5;color:var(--text-1);
+    background:rgba(230,222,250,.02);
+    border:1px solid var(--card-border);
+    border-radius:10px;
+    padding:10px 12px;
+    max-height:120px;
+    overflow-y:auto;
+    white-space:pre-wrap;
+    margin-bottom:10px;
+  }
+  .library-entry-actions{display:flex;gap:8px;flex-wrap:wrap;}
+  .library-entry-actions .btn-mini, .library-entry-actions .btn-ghost-mini{padding:6px 14px;font-size:12.5px;}
+  .btn-delete-mini{
+    background:rgba(225,29,72,.06);
+    border:1.5px solid rgba(225,29,72,.25);
+    color:#fda4af;
+    padding:6px 14px;border-radius:999px;font-size:12.5px;font-weight:600;cursor:pointer;
+    transition:background .15s ease, border-color .15s ease;
+  }
+  .btn-delete-mini:hover{background:rgba(225,29,72,.14);border-color:rgba(225,29,72,.45);}
+  .library-clear-all{margin-top:22px;text-align:center;}
+
   /* access gate — full-screen paywall shown before anything else loads */
   #access-gate{
     display:none;
@@ -1122,6 +1200,20 @@
   </div>
 </div>
 
+<!-- Library — every prompt ever generated, saved automatically to
+     localStorage on this browser (see LIBRARY_STORAGE_KEY in the script
+     below). Opened via the "My Library" link near the task box. -->
+<div id="library-modal">
+  <div class="modal-card">
+    <div class="library-header">
+      <h2>My Library</h2>
+      <button class="btn-ghost-mini" type="button" id="library-close-btn">Close</button>
+    </div>
+    <p class="library-sub">Every prompt you've generated, saved automatically on this browser — come back anytime to re-read, re-copy, or reopen one.</p>
+    <div id="library-body"></div>
+  </div>
+</div>
+
 <div class="wrap" id="app-wrap" style="display:none;">
 
   <header class="app-header">
@@ -1148,7 +1240,10 @@
     <div class="card">
       <div id="task-box-mount"></div>
     </div>
-    <button class="btn-edit-setup" type="button" id="setup-edit-btn" style="display:none;">← Edit tools/industry/role</button>
+    <div style="display:flex;align-items:center;justify-content:center;gap:18px;flex-wrap:wrap;">
+      <button class="btn-edit-setup" type="button" id="setup-edit-btn" style="display:none;margin:16px 0 0;">← Edit tools/industry/role</button>
+      <button class="btn-edit-setup" type="button" id="library-open-btn" style="margin:16px 0 0;">My Library</button>
+    </div>
   </div>
 
   <div id="form-section">
@@ -1611,6 +1706,129 @@ function collectInputs(){
 // blocked (private browsing, some file:// contexts) — this should degrade
 // silently to "just re-fill the form" rather than ever breaking the page.
 const STORAGE_KEY = 'aiStackNavigator.formState.v1';
+
+// ---- library: every generated prompt, saved automatically ----
+// Newest first, capped at LIBRARY_MAX_ENTRIES so localStorage doesn't grow
+// unbounded for a heavy user — old entries just quietly fall off the end.
+const LIBRARY_STORAGE_KEY = 'aiStackNavigator.library.v1';
+const LIBRARY_MAX_ENTRIES = 100;
+
+function loadLibrary(){
+  try{
+    const raw = localStorage.getItem(LIBRARY_STORAGE_KEY);
+    if(!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch(e){ return []; }
+}
+
+function saveLibrary(entries){
+  try{ localStorage.setItem(LIBRARY_STORAGE_KEY, JSON.stringify(entries.slice(0, LIBRARY_MAX_ENTRIES))); }
+  catch(e){ /* storage unavailable/full — nothing to do */ }
+}
+
+function addLibraryEntry({ describe, tool, type, prompt }){
+  const entries = loadLibrary();
+  entries.unshift({
+    id: Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+    ts: Date.now(),
+    describe: (describe || '').trim(),
+    tool: tool || '',
+    type: type || '',
+    prompt: prompt || ''
+  });
+  saveLibrary(entries);
+}
+
+function deleteLibraryEntry(id){
+  saveLibrary(loadLibrary().filter(e => e.id !== id));
+  renderLibrary();
+}
+
+function clearLibrary(){
+  if(!confirm('Delete everything in your library? This can\'t be undone.')) return;
+  saveLibrary([]);
+  renderLibrary();
+}
+
+function libraryDateLabel(ts){
+  try{
+    return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  } catch(e){ return ''; }
+}
+
+function renderLibrary(){
+  const body = document.getElementById('library-body');
+  if(!body) return;
+  const entries = loadLibrary();
+
+  if(!entries.length){
+    body.innerHTML = `<div class="library-empty">Nothing saved yet — generate a prompt and it'll show up here automatically.</div>`;
+    return;
+  }
+
+  const listHtml = entries.map(entry => {
+    const color = toolColor(entry.tool);
+    const taskLabel = entry.describe ? (entry.describe.length > 90 ? entry.describe.slice(0, 90) + '…' : entry.describe) : '(no description)';
+    return `
+      <div class="library-entry" data-id="${escapeHtml(entry.id)}">
+        <div class="library-entry-top">
+          <div class="library-entry-meta">
+            <div class="library-tool-badge" style="background:${color}">${escapeHtml((entry.tool||'?').slice(0,2).toUpperCase())}</div>
+            <span class="library-entry-task">${escapeHtml(taskLabel)}</span>
+          </div>
+          <span class="library-entry-date">${escapeHtml(libraryDateLabel(entry.ts))}</span>
+        </div>
+        <div class="library-entry-prompt">${escapeHtml(entry.prompt)}</div>
+        <div class="library-entry-actions">
+          <button class="btn-mini" type="button" data-action="copy">Copy</button>
+          <button class="btn-ghost-mini" type="button" data-action="open">Open ${escapeHtml(entry.tool || '')} →</button>
+          <button class="btn-delete-mini" type="button" data-action="delete">Delete</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  body.innerHTML = `<div class="library-list">${listHtml}</div>
+    <div class="library-clear-all"><button class="btn-ghost-mini" type="button" id="library-clear-all-btn">Clear all</button></div>`;
+
+  body.querySelectorAll('.library-entry').forEach(card => {
+    const id = card.dataset.id;
+    const entry = entries.find(e => e.id === id);
+    if(!entry) return;
+    card.querySelector('[data-action="copy"]').addEventListener('click', (e) => {
+      navigator.clipboard.writeText(entry.prompt).catch(() => {});
+      const btn = e.currentTarget;
+      const original = btn.textContent;
+      btn.textContent = 'Copied';
+      setTimeout(() => { btn.textContent = original; }, 1200);
+    });
+    card.querySelector('[data-action="open"]').addEventListener('click', () => {
+      window.open(buildToolLink(entry.tool, entry.prompt, entry.type), '_blank', 'noopener,noreferrer');
+      navigator.clipboard.writeText(entry.prompt).catch(() => {});
+    });
+    card.querySelector('[data-action="delete"]').addEventListener('click', () => deleteLibraryEntry(id));
+  });
+
+  const clearAllBtn = document.getElementById('library-clear-all-btn');
+  if(clearAllBtn) clearAllBtn.addEventListener('click', clearLibrary);
+}
+
+function openLibraryModal(){
+  renderLibrary();
+  const modal = document.getElementById('library-modal');
+  if(modal) modal.style.display = 'flex';
+}
+function closeLibraryModal(){
+  const modal = document.getElementById('library-modal');
+  if(modal) modal.style.display = 'none';
+}
+
+document.getElementById('library-open-btn') && document.getElementById('library-open-btn').addEventListener('click', openLibraryModal);
+document.getElementById('library-close-btn') && document.getElementById('library-close-btn').addEventListener('click', closeLibraryModal);
+document.getElementById('library-modal') && document.getElementById('library-modal').addEventListener('click', (e) => {
+  if(e.target.id === 'library-modal') closeLibraryModal();
+});
 
 function saveFormState(){
   try{
@@ -3412,6 +3630,10 @@ function buildDynamicLeaf(node, tools, alwaysOpen){
       enhanceNote.textContent = "The AI enhancer wasn't reachable just now, so this is the standard version — everything you entered is still in there.";
       enhanceNote.style.display = 'block';
     }
+
+    // Auto-save every generated prompt to the library so it can be found
+    // and re-read later — no extra action required from the user.
+    addLibraryEntry({ describe, tool, type, prompt: finalText });
   }
 
   // Red until there's a full sentence or two describing the task. Yellow
