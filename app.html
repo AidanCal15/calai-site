@@ -2011,7 +2011,7 @@ function countWords(text){
 // context box, and the tone box together — so someone who packs everything
 // into the first box (typed or spoken) gets credited the same as someone
 // who fills out the separate fields.
-const AUDIENCE_KEYWORDS = ['audience','background','reader','readers','customer','customers','client','clients','who this is for','industry','role','viewer','viewers','user','users','purpose','situation','target'];
+const AUDIENCE_KEYWORDS = ['audience','background','reader','readers','customer','customers','client','clients','who this is for','industry','role','viewer','viewers','user','users','purpose','situation','target','team','employees','staff','manager','managers','stakeholders','students','patients','members','coworkers','colleagues'];
 const TONE_KEYWORDS = ['tone','length','word count','words','short','long','formal','informal','casual','friendly','professional','concise','brief','paragraph','paragraphs','page','pages','style','voice','sentence','sentences'];
 
 // Once a task type is known, a couple of short, targeted follow-up
@@ -3636,23 +3636,42 @@ function buildDynamicLeaf(node, tools, alwaysOpen){
     addLibraryEntry({ describe, tool, type, prompt: finalText });
   }
 
-  // Red until there's a full sentence or two describing the task. Yellow
-  // as detail builds. Green ("strong") once there's real detail overall —
-  // a thoroughly packed description, or tone/length covered — but that
-  // green bar doesn't fill all the way. It only goes to "perfect" (full
-  // bar) once audience/background is covered too, on top of everything
-  // else.
+  // Cheap "is this real content or just padding" check — unique words
+  // divided by total words. Repeated filler like "blah blah, blahblah
+  // blah, blahblah blah" racks up word count fast but only ever uses one
+  // or two distinct words, so its ratio stays low; an actual sentence
+  // doesn't, since function words (a, the, for, about...) are each
+  // different words even though they're short. Too-short strings aren't
+  // penalized — there isn't enough text yet to judge either way.
+  function lexicalDiversity(text){
+    const words = (text || '').toLowerCase().trim().split(/\s+/).filter(Boolean).map(w => w.replace(/[^a-z0-9']/g, '')).filter(Boolean);
+    if(words.length < 2) return 1;
+    return new Set(words).size / words.length;
+  }
+
+  // Red until there's a full sentence or two describing the task, or the
+  // text is mostly repeated words rather than real content. Yellow as
+  // detail builds. Green ("strong") once there's real detail overall — a
+  // thoroughly packed, non-repetitive description, or tone/length covered
+  // — but that green bar doesn't fill all the way. It only goes to
+  // "perfect" (full bar) once audience/background is covered too, on top
+  // of everything else — and that credit now requires an actual
+  // audience-related word, not just two words typed into the context box.
   function promptStrength(){
     const describeWords = countWords(describeInput.value);
     const contextWords = countWords(contextInput.value);
     const toneWords = countWords(toneInput.value);
     const totalWords = describeWords + contextWords + toneWords;
     const combined = `${describeInput.value} ${contextInput.value} ${toneInput.value}`.toLowerCase();
-    const hasAudience = contextWords >= 2 || AUDIENCE_KEYWORDS.some(k => combined.includes(k));
+    const describeDiverse = lexicalDiversity(describeInput.value) >= 0.55;
+    const hasAudience = AUDIENCE_KEYWORDS.some(k => combined.includes(k));
     const hasToneLength = toneInput.value.trim().length > 0 || TONE_KEYWORDS.some(k => combined.includes(k));
 
     if(describeWords < 5){
       return { level: 'weak', pct: Math.min(25, describeWords / 5 * 25), label: 'Add a full sentence about what you need' };
+    }
+    if(!describeDiverse){
+      return { level: 'weak', pct: 22, label: "That reads like repeated words, not real detail — describe the task in your own words" };
     }
     const detailed = totalWords >= 12 || hasToneLength;
     if(detailed && hasAudience){
