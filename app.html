@@ -1206,7 +1206,7 @@
 <div id="library-modal">
   <div class="modal-card">
     <div class="library-header">
-      <h2>My Library</h2>
+      <h2>Your past prompts</h2>
       <button class="btn-ghost-mini" type="button" id="library-close-btn">Close</button>
     </div>
     <p class="library-sub">Every prompt you've generated, saved automatically on this browser — come back anytime to re-read, re-copy, or reopen one.</p>
@@ -1242,7 +1242,7 @@
     </div>
     <div style="display:flex;align-items:center;justify-content:center;gap:18px;flex-wrap:wrap;">
       <button class="btn-edit-setup" type="button" id="setup-edit-btn" style="display:none;margin:16px 0 0;">← Edit tools/industry/role</button>
-      <button class="btn-edit-setup" type="button" id="library-open-btn" style="margin:16px 0 0;">My Library</button>
+      <button class="btn-edit-setup" type="button" id="library-open-btn" style="margin:16px 0 0;">Your past prompts</button>
     </div>
   </div>
 
@@ -3470,9 +3470,35 @@ function buildDynamicLeaf(node, tools, alwaysOpen){
     formStep.style.display = 'block';
     if(alwaysOpen) intro.style.display = '';
   });
+
+  // Distinct from "Edit my answers" (which keeps what you typed) — this
+  // wipes everything and returns to a genuinely blank task box, for
+  // starting a completely new, unrelated task.
+  const homeBtn = document.createElement('button');
+  homeBtn.className = 'btn-ghost-mini';
+  homeBtn.type = 'button';
+  homeBtn.textContent = 'Home page';
+  homeBtn.addEventListener('click', () => {
+    describeInput.value = '';
+    contextInput.value = '';
+    linkInput.value = '';
+    toneInput.value = '';
+    attachedFiles = [];
+    renderChips();
+    genErr.style.display = 'none';
+    resultStep.style.display = 'none';
+    clarifyStep.style.display = 'none';
+    followupStep.style.display = 'none';
+    formStep.style.display = 'block';
+    if(alwaysOpen) intro.style.display = '';
+    updateStrengthMeter();
+    describeInput.focus();
+  });
+
   resultActions.appendChild(copyBtn);
   resultActions.appendChild(openToolBtn);
   resultActions.appendChild(editBtn);
+  resultActions.appendChild(homeBtn);
 
   const enhanceNote = document.createElement('p');
   enhanceNote.className = 'note';
