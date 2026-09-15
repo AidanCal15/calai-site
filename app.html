@@ -223,11 +223,6 @@
   }
   .step-desc{font-size:11.5px;color:var(--text-2);text-transform:uppercase;letter-spacing:.05em;font-weight:600;margin:0 0 20px;line-height:1.55;}
 
-  /* The title and the "Go back" button share a row (space-between), but the
-     description paragraph is now a separate full-width block below that
-     row — not squeezed into a narrow column beside the button — so it can
-     wrap using the whole card width instead of stopping wherever the
-     button's column starts. */
   .task-box-heading{
     display:flex;
     align-items:center;
@@ -236,10 +231,6 @@
     flex-wrap:wrap;
     margin-bottom:8px;
   }
-  /* The row itself already carries the spacing before the description
-     paragraph (margin-bottom above), so the title's own bottom margin is
-     zeroed here — otherwise that invisible margin throws off
-     align-items:center, making the title look higher than the button. */
   .task-box-heading h2.step-title{margin:0;}
 
   .chip-grid{
@@ -350,9 +341,6 @@
   .btn-primary:hover::before{left:130%;}
   .btn-primary:hover{transform:translateY(-2px);box-shadow:0 18px 42px -8px rgba(167,139,250,.75);background-position:100% 50%;}
 
-  /* Same light-sweep shimmer as the primary "Let's go" button, applied to
-     every chip, the Skip button, and the heading inside the setup modal —
-     only plays on hover, same as the primary button. */
   #setup-modal .chip,
   #setup-modal .btn-ghost-mini,
   #setup-modal h2{
@@ -431,9 +419,6 @@
   }
   #loading p{color:var(--text-1);font-size:14px;}
 
-  /* old multi-step wizard — kept in the DOM (unused JS wiring depends on
-     these elements existing) but never shown; the single task box below
-     replaced it as the actual UI. */
   #form-section{display:none;}
 
   /* one-time setup popup */
@@ -461,11 +446,6 @@
     animation:fadeUp .35s cubic-bezier(.16,1,.3,1) both;
   }
 
-  /* library — a running history of every prompt generated, saved to
-     localStorage automatically (see LIBRARY_STORAGE_KEY), so someone can
-     come back later and re-read or re-open something they built before.
-     Same overlay/modal-card pattern as #setup-modal, just wider (there's
-     real prompt text to read, not a short form) and with its own list. */
   #library-modal{
     display:none;
     position:fixed;inset:0;
@@ -539,7 +519,7 @@
   .btn-delete-mini:hover{background:rgba(225,29,72,.14);border-color:rgba(225,29,72,.45);}
   .library-clear-all{margin-top:22px;text-align:center;}
 
-  /* access gate — full-screen paywall shown before anything else loads */
+  /* access gate — full-screen paywall / key entry */
   #access-gate{
     display:none;
     position:fixed;inset:0;
@@ -592,6 +572,7 @@
     letter-spacing:.02em;
   }
   #access-gate-form .btn-primary{width:100%;}
+  #access-gate-form .btn-ghost{width:100%;text-align:center;}
   #access-gate-form .btn-primary:disabled{opacity:.6;cursor:wait;}
   .access-gate-error{
     margin:16px 0 0;
@@ -609,6 +590,36 @@
   }
   .access-gate-contact a{color:var(--teal-1);font-weight:600;text-decoration:none;}
   .access-gate-contact a:hover{text-decoration:underline;}
+
+  /* free-trial paywall additions */
+  .access-gate-card{position:relative;}
+  .access-gate-close{
+    position:absolute;top:12px;right:14px;
+    background:none;border:none;color:var(--text-2);
+    font-size:24px;line-height:1;cursor:pointer;padding:2px 8px;border-radius:8px;
+  }
+  .access-gate-close:hover{color:var(--text-0);}
+  .access-gate-buy{
+    display:block;width:100%;text-decoration:none;text-align:center;margin:0 0 8px;
+  }
+  .access-gate-guarantee{margin:0 0 18px;font-size:12px;color:var(--text-2);}
+  .access-gate-or{
+    display:flex;align-items:center;gap:10px;
+    margin:4px 0 14px;color:var(--text-2);font-size:12px;
+  }
+  .access-gate-or::before,.access-gate-or::after{
+    content:"";height:1px;flex:1;background:var(--card-border);
+  }
+  .trial-pill{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:8px 16px;border-radius:999px;
+    background:rgba(236,72,153,.08);border:1px solid rgba(236,72,153,.22);
+    color:var(--text-1);font-size:13px;font-weight:600;cursor:pointer;
+    transition:border-color .18s ease, background .18s ease;
+  }
+  .trial-pill:hover{border-color:rgba(236,72,153,.4);background:rgba(236,72,153,.12);}
+  .trial-pill b{color:var(--teal-glow);}
+  .trial-pill.trial-pill-out{background:rgba(225,29,72,.08);border-color:rgba(225,29,72,.32);}
 
   /* tree */
   #tree-section{display:none;}
@@ -756,15 +767,6 @@
     border-radius:10px;
     resize:vertical;
   }
-  /* justify-content/align-items center this row (it was left-aligned and
-     drifting off-center before, since flex containers ignore the parent's
-     text-align:center). The .btn-ghost-mini override below matches its
-     padding/font-size to .btn-mini specifically in this row — those two
-     classes are legitimately different sizes elsewhere (primary vs. a
-     smaller secondary action like "Skip"), but here all three buttons
-     (Copy prompt / Open [tool] / Edit my answers) are peer actions, so a
-     smaller "Edit my answers" pill next to two full-size ones read as
-     uneven rather than as an intentional hierarchy. */
   .prompt-actions{margin-top:0;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center;}
   .prompt-actions .btn-ghost-mini{padding:9px 19px;font-size:14px;}
   .prompt-result{display:flex;flex-direction:column;gap:24px;}
@@ -797,12 +799,6 @@
   .strength-status.strength-ok{color:#fbbf24;}
   .strength-status.strength-strong{color:#4ade80;}
   .strength-status.strength-perfect{color:#4ade80;}
-  /* Smooth pill bar whose gradient is "revealed" as it fills, rather than
-     recolored in flat blocks — red only shows at low strength, green only
-     appears once the bar has actually grown that far. The gradient's
-     background-size is kept in sync with the track's real pixel width (via
-     JS) so the reveal lines up correctly instead of restretching a full
-     red-to-green gradient across whatever short width the bar currently is. */
   .strength-track{
     height:14px;
     border-radius:999px;
@@ -832,9 +828,6 @@
     cursor:pointer;
     transition:color .15s ease, border-color .15s ease, background .15s ease, transform .12s ease;
   }
-  /* Plain text link, not a button — sits below the card on the page's own
-     gradient background, so it's styled like the footer links (white,
-     underlined) rather than a bordered pill. */
   .btn-edit-setup{
     display:block;
     background:none;
@@ -852,11 +845,6 @@
   }
   .btn-edit-setup:hover{opacity:1;}
   #task-box-section{text-align:center;}
-  /* Small round icon-only button, inset into the bottom-right corner of
-     the describe textarea (see .describe-input-wrap below) instead of a
-     labeled pill sitting underneath it. resize:none because the browser's
-     native resize grip lives in that same corner and would fight the
-     button; padding-right keeps typed text from running under it. */
   .describe-input-wrap{position:relative;}
   .describe-input-wrap textarea.prompt-input{resize:none;padding-right:44px;}
   .describe-input-wrap textarea.prompt-input::placeholder{font-size:11.5px;color:var(--text-2);text-transform:uppercase;letter-spacing:.05em;font-weight:600;}
@@ -973,10 +961,6 @@
     outline:2px solid var(--teal-glow);
     outline-offset:2px;
   }
-  /* Buttons had no themed focus style, so a clicked/tabbed-to button (e.g.
-     "Open Gemini") fell back to the browser's default blue focus ring —
-     that's what made it look like a different color/size next to the
-     others in a screenshot. Themed to match the rest of the app instead. */
   .btn-primary:focus-visible, .btn-ghost:focus-visible, .btn-mini:focus-visible, .btn-ghost-mini:focus-visible{
     outline:2px solid var(--teal-glow);
     outline-offset:2px;
@@ -1003,9 +987,6 @@
   .optional-summary-icon svg{width:100%;height:100%;}
   .optional-summary-text{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0;}
   .optional-summary-title{font-size:11.5px;color:var(--text-2);text-transform:uppercase;letter-spacing:.05em;font-weight:600;}
-  /* Description now shows as a hover tooltip instead of a permanent second
-     line — keeps the summary row to one short line, detail still available
-     on hover for anyone curious. */
   .optional-summary-title-wrap{position:relative;display:inline-block;}
   .optional-summary-tooltip{
     position:absolute;
@@ -1100,18 +1081,9 @@
 </style>
 </head>
 <body>
-
-<!-- Access gate — shown before anything else loads. This is a soft,
-     client-side speed bump (the page is a static file, so anyone who opens
-     devtools can technically bypass it or read the password hash) — not a
-     real security boundary against someone determined — but the actual check
-     now happens server-side (see netlify/functions/verify-license.js), which
-     verifies the key against Gumroad directly. Unlocking is remembered
-     per-browser via localStorage and silently re-checked about once a month,
-     so a paying customer only has to type their key again if that recheck
-     fails (e.g. they got a refund). -->
 <div id="access-gate">
   <div class="access-gate-card">
+    <button type="button" id="access-gate-close" class="access-gate-close" aria-label="Close">×</button>
     <div class="access-gate-logo">
       <svg viewBox="16 16 68 68" width="40" height="40" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <path d="M62 23c-15 0-15 13.5 0 13.5S77 50 62 50H38c-15 0-15 13.5 0 13.5S53 77 38 77"
@@ -1120,20 +1092,20 @@
               fill="none" stroke="#ffffff" stroke-width="10" stroke-linecap="round" opacity=".55"/>
       </svg>
     </div>
-    <h1>This is a paid tool</h1>
-    <p>Enter the license key from your purchase confirmation email to continue.</p>
+    <h1 id="access-gate-title">Unlock unlimited access</h1>
+    <p id="access-gate-sub">Get unlimited tool matches and ready-to-use prompts — one time, yours forever.</p>
+    <a href="https://calaisolutions.gumroad.com/l/rccjm" class="btn-primary access-gate-buy">Get unlimited — $29 →</a>
+    <p class="access-gate-guarantee">One-time purchase · 30-day money-back guarantee</p>
+    <div class="access-gate-or"><span>Already bought?</span></div>
     <form id="access-gate-form">
-      <input type="text" id="access-gate-input" placeholder="License key" autocomplete="off" autofocus>
-      <button type="submit" class="btn-primary" id="access-gate-submit">Unlock →</button>
+      <input type="text" id="access-gate-input" placeholder="Enter your license key" autocomplete="off">
+      <button type="submit" class="btn-ghost" id="access-gate-submit">Unlock →</button>
     </form>
     <p class="access-gate-error" id="access-gate-error" style="display:none;">That key isn't valid — double check the email you got after purchase.</p>
-    <p class="access-gate-contact">Don't have a key yet? <a href="mailto:info@calaisolutions.com">info@calaisolutions.com</a></p>
+    <p class="access-gate-contact">Questions? <a href="mailto:info@calaisolutions.com">info@calaisolutions.com</a></p>
   </div>
 </div>
 
-<!-- Friendly one-time setup popup — shown right away on first visit, never
-     again after it's been completed or skipped, reopenable any time via the
-     "Edit" link on the main page. -->
 <div id="setup-modal" class="modal-backdrop">
   <div class="modal-card">
     <h2 style="margin:0 0 8px;font-size:22px;font-weight:800;color:var(--text-0);">Quick setup before you start</h2>
@@ -1200,9 +1172,6 @@
   </div>
 </div>
 
-<!-- Library — every prompt ever generated, saved automatically to
-     localStorage on this browser (see LIBRARY_STORAGE_KEY in the script
-     below). Opened via the "My Library" link near the task box. -->
 <div id="library-modal">
   <div class="modal-card">
     <div class="library-header">
@@ -1303,21 +1272,22 @@ const CLIENT_CONFIG = {
 // =====================================================================
 
 // =====================================================================
-// ACCESS GATE — real accounts without building real accounts. Each buyer
-// gets a unique license key automatically from Gumroad at checkout. The key
-// they type gets verified against Gumroad's API server-side, via the
-// Netlify function at netlify/functions/verify-license.js — that's the file
-// to edit to set your Gumroad Product ID and activation limit. This file
-// never contains anything a visitor could read to grant themselves access.
+// ACCESS GATE + FREE TRIAL — real accounts without building real accounts.
+// The app is usable immediately for a few free generations (TRIAL_LIMIT);
+// after that a paywall appears. Buyers unlock unlimited by entering a
+// license key, verified against Gumroad server-side via the Netlify
+// function at netlify/functions/verify-license.js. This file never contains
+// anything a visitor could read to grant themselves unlimited access.
 // =====================================================================
 
 (function(){
   const ACCESS_STORAGE_KEY = "calai.access.unlocked";
-  // How often a remembered unlock gets silently re-checked against Gumroad
-  // (catches refunds/chargebacks). Customers only have to retype their key
-  // if that recheck fails — otherwise about once a month, invisibly.
   const ACCESS_RECHECK_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
   const VERIFY_URL = '/.netlify/functions/verify-license';
+
+  // Free trial: this many full generations before the paywall appears.
+  const TRIAL_LIMIT = 3;
+  const TRIAL_USED_KEY = 'calai.trial.used';
 
   const gate = document.getElementById('access-gate');
   const appWrap = document.getElementById('app-wrap');
@@ -1325,64 +1295,94 @@ const CLIENT_CONFIG = {
   const gateInput = document.getElementById('access-gate-input');
   const gateError = document.getElementById('access-gate-error');
   const gateSubmit = document.getElementById('access-gate-submit');
+  const gateClose = document.getElementById('access-gate-close');
+  const gateTitle = document.getElementById('access-gate-title');
+  const gateSub = document.getElementById('access-gate-sub');
 
-  function showApp(){
-    if(gate) gate.style.display = 'none';
-    if(appWrap) appWrap.style.display = '';
+  let unlockedFull = false; // true once a valid license key is present
+
+  function showApp(){ if(gate) gate.style.display = 'none'; if(appWrap) appWrap.style.display = ''; }
+  function closeModal(){ if(gate) gate.style.display = 'none'; }
+  function openModal(mode){
+    if(!gate) return;
+    if(mode === 'paywall'){
+      if(gateTitle) gateTitle.textContent = `You've used your ${TRIAL_LIMIT} free prompts`;
+      if(gateSub) gateSub.textContent = "Unlock unlimited tool matches and ready-to-use prompts — one time, yours forever.";
+    } else {
+      if(gateTitle) gateTitle.textContent = "Enter your license key";
+      if(gateSub) gateSub.textContent = "Already bought CalAI? Enter the license key from your confirmation email to unlock unlimited use on this browser.";
+    }
+    gate.style.display = 'flex';
+    if(gateInput) setTimeout(() => gateInput.focus(), 40);
   }
-  function showGate(){
-    if(gate) gate.style.display = 'flex';
-    if(appWrap) appWrap.style.display = 'none';
-  }
-  function remember(licenseKey){
-    try{ localStorage.setItem(ACCESS_STORAGE_KEY, JSON.stringify({ licenseKey, verifiedAt: Date.now() })); }catch(e){ /* ignore */ }
-  }
-  function forget(){
-    try{ localStorage.removeItem(ACCESS_STORAGE_KEY); }catch(e){ /* ignore */ }
-  }
+
+  function getUsed(){ try{ return parseInt(localStorage.getItem(TRIAL_USED_KEY) || '0', 10) || 0; }catch(e){ return 0; } }
+  function setUsed(n){ try{ localStorage.setItem(TRIAL_USED_KEY, String(n)); }catch(e){ /* ignore */ } }
+  function remaining(){ return unlockedFull ? Infinity : Math.max(0, TRIAL_LIMIT - getUsed()); }
+
+  function remember(licenseKey){ try{ localStorage.setItem(ACCESS_STORAGE_KEY, JSON.stringify({ licenseKey, verifiedAt: Date.now() })); }catch(e){} }
+  function forget(){ try{ localStorage.removeItem(ACCESS_STORAGE_KEY); }catch(e){} }
 
   async function verifyKey(licenseKey){
     try{
-      const resp = await fetch(VERIFY_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ licenseKey })
-      });
+      const resp = await fetch(VERIFY_URL, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ licenseKey }) });
       const data = await resp.json();
       return !!data.valid;
-    }catch(e){
-      return null; // network/server issue — distinct from "invalid key"
+    }catch(e){ return null; }
+  }
+
+  function setUnlocked(v){ unlockedFull = v; updatePill(); }
+
+  // ---- trial UI: a pill above the task box + a "have a key" link ----
+  let pillEl = null;
+  function buildTrialUI(){
+    const section = document.getElementById('task-box-section');
+    if(section && !document.getElementById('trial-pill')){
+      pillEl = document.createElement('div');
+      pillEl.id = 'trial-pill';
+      pillEl.className = 'trial-pill';
+      pillEl.style.margin = '0 auto 16px';
+      pillEl.addEventListener('click', () => openModal(remaining() > 0 ? 'key' : 'paywall'));
+      section.insertBefore(pillEl, section.firstChild);
+    }
+    const libBtn = document.getElementById('library-open-btn');
+    if(libBtn && libBtn.parentElement && !document.getElementById('have-key-btn')){
+      const keyBtn = document.createElement('button');
+      keyBtn.id = 'have-key-btn';
+      keyBtn.type = 'button';
+      keyBtn.className = 'btn-edit-setup';
+      keyBtn.style.margin = '16px 0 0';
+      keyBtn.textContent = 'Have a license key?';
+      keyBtn.addEventListener('click', () => openModal('key'));
+      libBtn.parentElement.appendChild(keyBtn);
+    }
+    updatePill();
+  }
+  function updatePill(){
+    if(!pillEl) return;
+    if(unlockedFull){ pillEl.style.display = 'none'; return; }
+    pillEl.style.display = 'inline-flex';
+    const left = remaining();
+    if(left > 0){
+      pillEl.className = 'trial-pill';
+      pillEl.innerHTML = `<b>${left}</b> free ${left === 1 ? 'prompt' : 'prompts'} left · <span style="text-decoration:underline;">Unlock unlimited</span>`;
+    } else {
+      pillEl.className = 'trial-pill trial-pill-out';
+      pillEl.innerHTML = `Free prompts used · <span style="text-decoration:underline;">Get unlimited — $29</span>`;
     }
   }
 
-  let saved = null;
-  try{
-    const raw = localStorage.getItem(ACCESS_STORAGE_KEY);
-    if(raw) saved = JSON.parse(raw);
-  }catch(e){ /* ignore */ }
+  // ---- tiny API the generation code calls (see buildDynamicLeaf) ----
+  window.__calaiTrial = {
+    canGenerate(){ return unlockedFull || remaining() > 0; },
+    recordUse(){ if(!unlockedFull){ setUsed(getUsed() + 1); updatePill(); } },
+    openPaywall(){ openModal('paywall'); },
+    isUnlocked(){ return unlockedFull; }
+  };
 
-  if(saved && saved.licenseKey && typeof saved.verifiedAt === 'number' && (Date.now() - saved.verifiedAt) < ACCESS_RECHECK_MS){
-    // Recently verified — trust it for now, no network call needed.
-    showApp();
-  } else if(saved && saved.licenseKey){
-    // Due for a recheck. Show the app immediately (don't make a paying
-    // customer stare at a lock screen while we double-check them), then
-    // silently confirm in the background; only kick them back to the gate
-    // if the key no longer checks out.
-    showApp();
-    verifyKey(saved.licenseKey).then(valid => {
-      if(valid === true){
-        remember(saved.licenseKey);
-      } else if(valid === false){
-        forget();
-        showGate();
-      }
-      // valid === null (network error): leave them be, try again next load.
-    });
-  } else {
-    showGate();
-  }
-
+  // ---- modal wiring ----
+  if(gateClose) gateClose.addEventListener('click', closeModal);
+  if(gate) gate.addEventListener('click', (e) => { if(e.target === gate) closeModal(); });
   if(gateForm){
     gateForm.addEventListener('submit', async function(e){
       e.preventDefault();
@@ -1390,14 +1390,12 @@ const CLIENT_CONFIG = {
       if(!entered) return;
       if(gateError) gateError.style.display = 'none';
       if(gateSubmit){ gateSubmit.disabled = true; gateSubmit.textContent = 'Checking…'; }
-
       const valid = await verifyKey(entered);
-
       if(gateSubmit){ gateSubmit.disabled = false; gateSubmit.textContent = 'Unlock →'; }
-
       if(valid === true){
         remember(entered);
-        showApp();
+        setUnlocked(true);
+        closeModal();
       } else {
         if(gateError){
           gateError.textContent = valid === null
@@ -1409,6 +1407,29 @@ const CLIENT_CONFIG = {
       }
     });
   }
+
+  // ---- on load: the app is always usable (trial mode), no hard wall ----
+  showApp();
+  buildTrialUI();
+
+  // A buyer coming from the site's "Enter your license key" link can land
+  // straight on key entry via /app.html#unlock (or #key).
+  if(location.hash === '#unlock' || location.hash === '#key'){ openModal('key'); }
+
+  let saved = null;
+  try{ const raw = localStorage.getItem(ACCESS_STORAGE_KEY); if(raw) saved = JSON.parse(raw); }catch(e){}
+
+  if(saved && saved.licenseKey && typeof saved.verifiedAt === 'number' && (Date.now() - saved.verifiedAt) < ACCESS_RECHECK_MS){
+    setUnlocked(true);
+  } else if(saved && saved.licenseKey){
+    setUnlocked(true); // trust while we recheck in the background
+    verifyKey(saved.licenseKey).then(valid => {
+      if(valid === true){ remember(saved.licenseKey); }
+      else if(valid === false){ forget(); setUnlocked(false); }
+    });
+  } else {
+    setUnlocked(false);
+  }
 })();
 
 // When these recommendations were last reviewed — tool capabilities shift
@@ -1416,13 +1437,7 @@ const CLIENT_CONFIG = {
 // implying it's permanently current.
 const RECS_UPDATED = "August 2026";
 
-// Webhook for the "Something else" free-text box only. Everything else on
-// this page runs on the local rules engine below and never calls this —
-// this URL just gets a short classification (one of TASK_META's keys) back
-// for genuinely open-ended descriptions the local keyword matcher can't
-// confidently place. If the request fails or times out for any reason, the
-// caller falls straight back to the local classifier — the page never
-// depends on this being reachable.
+// Webhook for the "Something else" free-text box only.
 const AI_CLASSIFY_WEBHOOK_URL = "https://hook.us2.make.com/uj6ybkypigoh752jjpu5374nc12i9i8q";
 
 // Runs automatically on every generated prompt to write a genuinely
@@ -1445,10 +1460,6 @@ function toolColor(name){
   return TOOL_COLORS[key] || TOOL_COLORS.default;
 }
 
-// Direct links to each tool so people can jump straight there after
-// copying the prompt. Anything not in the map (a custom "Other" tool
-// someone typed in) falls back to a Google search for that tool's name —
-// still one click closer than making them look it up themselves.
 const TOOL_URLS = {
   "claude": "https://claude.ai/new",
   "chatgpt": "https://chatgpt.com/",
@@ -1463,27 +1474,8 @@ function toolUrl(name){
   return TOOL_URLS[key] || `https://www.google.com/search?q=${encodeURIComponent(name || '')}`;
 }
 
-// A handful of tools support putting the prompt straight into the URL so
-// it lands pre-filled in the chat box — no paste needed. This changes
-// often as the tools update their own sites, so it's kept to the ones
-// confirmed working, with a length cap so a long prompt doesn't get cut
-// off or blow past the browser's URL limit. Everything else (including
-// Claude, Gemini, and Copilot, whose prefill support is unreliable or
-// gone as of writing) just opens the tool's site — the prompt is copied
-// to the clipboard either way, so pasting it in still only takes one step.
 const URL_PREFILL_MAX_LEN = 1800;
 
-// NOTE on slides+Gemini: earlier this sent people to a blank Google Slides
-// file, on the assumption that a paid, Workspace-gated Slides feature would
-// just be there. It usually isn't. What actually works (confirmed): Gemini's
-// free "Canvas" mode, right in the normal chat app, builds a real navigable
-// deck with an Export-to-Slides button. gemini.google.com/canvas opens
-// straight into that mode already toggled on — Gemini has no URL param for
-// prefilling the prompt itself, so the prompt still has to be pasted (it's
-// already copied to the clipboard by the click handler below).
-// Copilot has no equivalent free/instant deep link — its version only runs
-// from inside PowerPoint itself and needs a paid plan, so it still just
-// opens Copilot's normal chat (see TYPE_INFO.slides for the manual steps).
 function buildToolLink(name, promptText, type){
   const key = (name || '').toLowerCase().trim();
   if(type === 'slides' && key === 'gemini') return 'https://gemini.google.com/canvas';
@@ -1575,12 +1567,6 @@ function escapeHtml(str){
   return d.innerHTML;
 }
 
-// Adds a "speak instead of typing" button next to a textarea, using the
-// browser's own built-in speech-to-text (no API, no cost, nothing leaves
-// the device — this is separate from the AI classification webhook).
-// Supported in Chrome/Edge; Safari and Firefox don't implement this API, so
-// the button simply doesn't appear there rather than showing something
-// broken.
 function attachMicButton(textareaEl){
   const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if(!Recognition) return null;
@@ -1625,7 +1611,6 @@ function attachMicButton(textareaEl){
     listening = false;
     micBtn.classList.remove('btn-mic-listening');
     micBtn.innerHTML = MIC_IDLE_HTML;
-    // Mic blocked, no mic present, etc. — fails silently, typing still works.
   });
 
   micBtn.addEventListener('click', () => {
@@ -1636,8 +1621,6 @@ function attachMicButton(textareaEl){
   return micBtn;
 }
 
-// Applies CLIENT_CONFIG (see top of file) so a customized copy can open
-// pre-filled — or fully pre-generated — for a specific client.
 function applyClientConfig(){
   const cfg = CLIENT_CONFIG;
 
@@ -1702,14 +1685,9 @@ function collectInputs(){
 }
 
 // ---- persistence: remember a team's selections between visits ----
-// Wrapped in try/catch throughout since localStorage can be unavailable or
-// blocked (private browsing, some file:// contexts) — this should degrade
-// silently to "just re-fill the form" rather than ever breaking the page.
 const STORAGE_KEY = 'aiStackNavigator.formState.v1';
 
 // ---- library: every generated prompt, saved automatically ----
-// Newest first, capped at LIBRARY_MAX_ENTRIES so localStorage doesn't grow
-// unbounded for a heavy user — old entries just quietly fall off the end.
 const LIBRARY_STORAGE_KEY = 'aiStackNavigator.library.v1';
 const LIBRARY_MAX_ENTRIES = 100;
 
@@ -1912,19 +1890,6 @@ const TOOL_PREFERENCE = {
   data:       ["ChatGPT", "Claude", "Gemini"],
   brainstorm: ["ChatGPT", "Claude", "Gemini"],
   support:    ["ChatGPT", "Claude", "Microsoft Copilot"],
-  // All four can now produce an actual file, not just a written outline —
-  // ranked by how reliable/convenient that actually is (verified, not
-  // assumed — see TYPE_INFO.slides for sourcing):
-  // 1. Gemini — free "Canvas" mode, in normal chat, confirmed working,
-  //    one-click Export to Slides.
-  // 2. Claude — file creation (real .pptx) opened to every user, free tier
-  //    included, since Feb 2026.
-  // 3. ChatGPT — can generate a downloadable .pptx even on free tier, but
-  //    quality is consistently reported as rougher/more basic.
-  // 4. Microsoft Copilot — real deck generation exists but is the least
-  //    reliable/convenient: gated behind a Microsoft 365/Copilot Pro plan,
-  //    saves to OneDrive rather than downloading directly, and has
-  //    documented reliability complaints even for eligible users.
   slides:     ["Gemini", "Claude", "ChatGPT", "Microsoft Copilot"]
 };
 
@@ -1939,12 +1904,6 @@ const TYPE_INFO = {
   data:       (t) => `${t} is handy for exploring datasets and building quick analyses.`,
   brainstorm: (t) => `${t} is great for rapid idea generation and back-and-forth brainstorming.`,
   support:    (t) => `${t} works well for drafting quick, clear customer responses.`,
-  // Gemini's "Canvas" mode builds a real, navigable deck right inside the
-  // chat (with an Export-to-Slides button) — it's a free feature, no paid
-  // plan needed, just has to be switched on in the toolbar before the
-  // prompt is sent (confirmed working — see chat history). Copilot's
-  // equivalent is less convenient: it only runs from inside PowerPoint
-  // itself, and needs Microsoft 365 or Copilot Pro.
   slides:     (t) => {
     if(t === 'Gemini'){
       return `Gemini can build the actual deck for you, right in the chat — the button below opens Gemini already in Canvas mode (free, no paid plan needed), so just paste the prompt in and send it. Gemini will generate real, navigable slides with an Export-to-Slides button, not just a written outline.`;
@@ -1963,11 +1922,6 @@ const TYPE_INFO = {
   _default:   (t) => `${t} is a flexible, general-purpose choice for a task that doesn't fit a specific category.`
 };
 
-// A short caution shown on task types that commonly involve sensitive
-// material — not a legal opinion, just a nudge to check before pasting
-// something confidential into a tool without an enterprise data agreement.
-// Types not listed here (quickcopy, research, brainstorm, writing, _default)
-// don't typically involve sensitive source material, so no note is shown.
 const SENSITIVITY_NOTES = {
   legal:     "Contracts and case details are often confidential — check your organization's data policy before pasting them into a tool without an enterprise agreement.",
   summarize: "If this document contains client, patient, or financial details, confirm your tool's data policy before pasting it in.",
@@ -1977,8 +1931,6 @@ const SENSITIVITY_NOTES = {
   office:    "If the email or message contains confidential business details, check your tool's data policy before pasting it in."
 };
 
-// Plain-language options shown in the "what kind of task is this?" clarification
-// step — every TASK_META type gets one, plus a true catch-all at the end.
 const CATEGORY_OPTIONS = [
   { label: "Write or draft something", type: "writing" },
   { label: "Short copy — captions, taglines, ads", type: "quickcopy" },
@@ -1994,9 +1946,6 @@ const CATEGORY_OPTIONS = [
   { label: "None of these — just help me generally", type: "_default" }
 ];
 
-// Minimum-detail gate: a one- or two-word description almost never has
-// enough in it to build a good prompt from, so we ask for more instead of
-// guessing at what someone means by "campaign" or "the thing."
 function isDescribeSufficient(text){
   const trimmed = (text || '').trim();
   const words = trimmed.split(/\s+/).filter(Boolean);
@@ -2007,26 +1956,9 @@ function countWords(text){
   return (text || '').trim().split(/\s+/).filter(Boolean).length;
 }
 
-// Signal words the strength meter looks for across the describe box, the
-// context box, and the tone box together — so someone who packs everything
-// into the first box (typed or spoken) gets credited the same as someone
-// who fills out the separate fields.
 const AUDIENCE_KEYWORDS = ['audience','background','reader','readers','customer','customers','client','clients','who this is for','industry','role','viewer','viewers','user','users','purpose','situation','target','team','employees','staff','manager','managers','stakeholders','students','patients','members','coworkers','colleagues'];
 const TONE_KEYWORDS = ['tone','length','word count','words','short','long','formal','informal','casual','friendly','professional','concise','brief','paragraph','paragraphs','page','pages','style','voice','sentence','sentences'];
 
-// Once a task type is known, a couple of short, targeted follow-up
-// questions get us the rest of the way to a genuinely good prompt. The
-// initial "describe your task" box is always used as the prompt's Task
-// line, so it already carries the subject matter — these follow-ups only
-// ask for things that box genuinely doesn't cover (audience, platform,
-// length, jurisdiction, etc.), never a restated "what's this about"
-// question, so nobody explains the same thing twice in a row.
-// Types not listed here (summarize, _default) don't need anything extra —
-// the description/context/attached file already covers it.
-// Each question has two labels: `label` is the friendly on-screen question,
-// and `promptLabel` is the short, clean tag used when assembling the
-// actual prompt (e.g. "Audience: existing customers" rather than the
-// question phrasing itself).
 const FOLLOWUP_QUESTIONS = {
   writing: [
     { key: 'audience', label: "Who's this for?", promptLabel: 'Audience', placeholder: 'e.g. existing customers, new leads, internal team' },
@@ -2060,11 +1992,6 @@ const FOLLOWUP_QUESTIONS = {
   ]
 };
 
-// Wraps a group of optional fields behind a single native <details> toggle,
-// collapsed by default, so the form starts minimal and only reveals context/
-// tone/follow-up fields when someone actually clicks in to add them. Values
-// are still readable via .value even while collapsed, since the elements
-// stay in the DOM either way.
 function buildOptionalDetails(summaryText, contentEls, subtitleText){
   const details = document.createElement('details');
   details.className = 'optional-details';
@@ -2235,10 +2162,6 @@ function pickTool(type, tools){
 }
 
 // ---- prompt builder ----
-// Instead of static fill-in-the-blank templates, the user describes what they
-// actually need in their own words, and we assemble a well-structured prompt
-// around that description — no API call needed, just templating.
-
 function line(label, val){
   return val ? `\n\n${label}: ${val}` : '';
 }
@@ -2258,10 +2181,6 @@ const DESCRIBE_PLACEHOLDER = {
   _default:   "Describe what you want help creating or figuring out"
 };
 
-// Per-task-type content: a role framing (when one helps) and the core
-// instructions, kept as plain English — no tags, no markup. The tool-specific
-// formatting (Perplexity, Copilot, everything else) is layered on separately
-// in buildFinalPrompt() below, so this stays simple to read and to extend.
 const TASK_META = {
   writing: {
     role: "You are an experienced writer.",
@@ -2347,9 +2266,6 @@ function isPerplexityTool(tool){ return (tool || '').toLowerCase().includes('per
 function isCopilotTool(tool){ return (tool || '').toLowerCase().includes('copilot'); }
 function isChatGPTTool(tool){ const t = (tool || '').toLowerCase(); return t.includes('chatgpt') || t.includes('gpt'); }
 
-// Renders the "paste your material" block, phrased differently for Copilot
-// (which can usually just look at the document/email already open) than for
-// everything else (which needs the content pasted in).
 function pasteBlock(label, tool){
   if(!label) return '';
   if(isCopilotTool(tool)){
@@ -2358,21 +2274,6 @@ function pasteBlock(label, tool){
   return `\n\n---\n[PASTE ${label} HERE]`;
 }
 
-// Assembles the final prompt. Same plain, readable shape for every tool —
-// no tags or markup — with small, tool-specific adjustments layered in,
-// each matching that vendor's own current prompting guidance:
-// - Perplexity: phrased as a direct question, and told to back every claim
-//   with a short direct quote + named source (Perplexity's own guidance —
-//   vague "cite sources" asks produce weaker citations than an explicit
-//   quote-and-name requirement).
-// - Copilot: the "reference what's already open" nudge is placed LAST,
-//   after the task/context/instructions — Microsoft's own guidance says
-//   later parts of a prompt get more weight, so source/file references
-//   should come at the end, not buried up top.
-// - ChatGPT: sections get explicit ### delimiters — OpenAI's guidance
-//   specifically calls out separating instructions/context with delimiters
-//   for more reliable parsing, whereas Claude/Gemini/custom tools do best
-//   with the plain, unadorned version (minimum necessary structure).
 function buildFinalPrompt({ describe, context, tone, type, tool }){
   const meta = TASK_META[type] || TASK_META._default;
   const instructionsText = meta.instructions({ tone });
@@ -2436,17 +2337,9 @@ const KEYWORD_MAP = {
   data:       ["data", "spreadsheet", "csv", "dataset", "analyze numbers", "chart", "trend in the numbers", "excel", "pivot table", "sales numbers", "metrics", "kpi", "dashboard", "forecast"],
   brainstorm: ["brainstorm", "ideas for", "ideate", "think of ideas", "list of ideas", "campaign ideas", "marketing campaign", "social media campaign", "name ideas", "concept for", "angles for", "options for", "campaign"],
   support:    ["customer", "refund", "complaint", "support ticket", "reply to a customer", "customer service", "apology to a client", "cancellation request", "billing issue"],
-  // "deck", "slides", "presentation" etc. are included standalone (not just
-  // inside phrases like "build a deck") so any request that's clearly about
-  // a deck/presentation/slides gets caught, however it's phrased — Gemini is
-  // ranked #1 for this type (see TOOL_PREFERENCE.slides) and routes straight
-  // to Canvas mode (see buildToolLink) whenever it's in the user's stack.
   slides:     ["slide deck", "slides", "slide", "slideshow", "slide show", "slide outline", "powerpoint", "power point", "google slides", "keynote", "presentation", "pitch deck", "sales deck", "investor deck", "board deck", "deck", "deck for", "build a deck", "make a deck", "deck to"]
 };
 
-// Turns text into a word set for the fallback matcher below. Adds a crude
-// de-pluralized form of longer words ("posts" -> also "post") so word-level
-// matches aren't defeated by simple plurals.
 function wordSet(lower){
   const words = lower.split(/[^a-z0-9']+/).filter(Boolean);
   const set = new Set();
@@ -2479,9 +2372,6 @@ function classifyText(text){
   return bestType;
 }
 
-// Given a KNOWN type (from keyword match or from the user explicitly
-// picking a category), work out the tool + reason. This is the "safe"
-// path — it's never called with a guess we're not sure about.
 function recommendForType(type, tools){
   const tool = pickTool(type, tools);
   const explain = TYPE_INFO[type];
@@ -2502,13 +2392,6 @@ function recommendForText(text, tools){
   };
 }
 
-// Asks the Make.com webhook (Claude Haiku, no web search — this only needs
-// to understand plain-language phrasing, not check anything live) to
-// classify an open-ended description into one of our known task types. Used
-// only by the "Something else" box, only when it's actually worth the
-// round-trip. Degrades silently to the local keyword classifier on any
-// failure — slow network, webhook down, bad response, whatever — so this
-// box always works even if the AI call doesn't.
 async function classifyViaAI(describeText){
   try{
     const controller = new AbortController();
@@ -2531,20 +2414,6 @@ async function classifyViaAI(describeText){
   }
 }
 
-// Asks the "enhance" webhook (a separate Claude call, richer than the
-// classifier above) to write an actually-tailored prompt from the raw
-// answers, instead of the local template just slotting them in verbatim.
-// Only called when someone clicks "Enhance with AI" — never automatically —
-// so the free instant version stays the default and this stays a deliberate,
-// opt-in upgrade. Returns null on any failure so the caller can just leave
-// the local template in place rather than showing a broken state.
-// Make's webhook response occasionally contains a real line break inside
-// what's supposed to be a single JSON string (a known Make quirk with
-// multi-paragraph AI output) — that makes strict JSON.parse throw even
-// though the actual content is perfectly fine. Try a real parse first;
-// if that fails, pull the text straight out of the {"prompt":"..."} shape
-// by hand instead of giving up. If it's not JSON-shaped at all (plain
-// text response), just use it as-is.
 function extractEnhancedText(raw){
   const text = String(raw || '').trim();
   if(!text) return '';
@@ -2580,10 +2449,6 @@ async function enhancePromptOnce({ describe, context, type, tool, currentPrompt 
   return trimmed;
 }
 
-// Retries once after a short pause before giving up — a brand-new Anthropic
-// account has fairly low rate limits, and this scenario has been hit with
-// a lot of rapid test traffic, so a single transient rate-limit error
-// shouldn't have to mean falling all the way back to the plain template.
 async function enhancePromptViaAI(args){
   try{
     return await enhancePromptOnce(args);
@@ -2869,13 +2734,6 @@ function buildNode(node, isRoot, tools){
     genErr.className = 'prompt-error';
     genErr.style.display = 'none';
 
-    // A couple of short, category-specific follow-ups (platform, audience,
-    // language, etc.) — asked upfront rather than guessed at. The "topic"
-    // question (what's this actually about) is the one thing a format-only
-    // description like "Friday blog post" never supplies, so it's pulled out
-    // and made required + always visible rather than optional and hidden
-    // behind the details toggle — without it, the assembled prompt has no
-    // real subject matter and Claude/ChatGPT/etc. would just be guessing.
     const followupInputs = [];
     let topicEntry = null;
     (FOLLOWUP_QUESTIONS[rec.type] || []).forEach(q => {
@@ -2901,10 +2759,6 @@ function buildNode(node, isRoot, tools){
     generateBtn.type = 'button';
     generateBtn.textContent = 'Generate my prompt →';
 
-    // Everything except the required topic question is optional, so it's
-    // tucked behind one toggle rather than shown by default — the form
-    // starts with just the required description + topic, and this whole
-    // group appears only if someone actually wants to add more.
     const optionalContent = [contextInput, dropzone, fileInput, chipList, toneLabel, toneInput];
     followupInputs.forEach(f => {
       if(f === topicEntry) return; // shown separately, always visible
@@ -3020,10 +2874,6 @@ function buildNode(node, isRoot, tools){
         tool: rec.tool
       });
 
-      // Show the result screen right away with a placeholder while Claude
-      // writes the tailored version — the local template is only a
-      // fallback now, never shown as the "real" answer unless the AI call
-      // fails.
       outputArea.value = 'Writing your tailored prompt…';
       outputArea.rows = 3;
       copyBtn.disabled = true;
@@ -3106,11 +2956,6 @@ function buildDynamicLeaf(node, tools, alwaysOpen){
 
   const intro = document.createElement('div');
   if(alwaysOpen){
-    // This is the whole app now — a plain heading, not a collapsible card.
-    // The title + "Go back" button share a row (space-between); the
-    // description is a separate full-width block below that row so it can
-    // wrap using the whole card width instead of a narrow column beside
-    // the button.
     intro.className = 'task-box-intro';
     intro.innerHTML = `
       <div class="task-box-heading">
@@ -3142,10 +2987,6 @@ function buildDynamicLeaf(node, tools, alwaysOpen){
   describeInput.placeholder = 'Describe your task in a sentence or two…';
   const describeMicBtn = attachMicButton(describeInput);
 
-  // Live strength meter — red/yellow/green — instead of a hard word-count
-  // gate. Nudges people toward adding real detail (which is what actually
-  // makes the AI-enhanced prompt good) without a scary error the instant
-  // they start typing. Only the red zone blocks generation.
   const strengthMeter = document.createElement('div');
   strengthMeter.className = 'strength-meter';
   strengthMeter.innerHTML = `
@@ -3158,11 +2999,6 @@ function buildDynamicLeaf(node, tools, alwaysOpen){
   const strengthStatus = strengthMeter.querySelector('.strength-status');
   const strengthTrack = strengthMeter.querySelector('.strength-track');
   const strengthFill = strengthMeter.querySelector('.strength-fill');
-  // The fill's gradient needs to be sized to the track's actual pixel
-  // width, not a percentage of the fill's own (currently short) width —
-  // otherwise a short bar would show a squashed full red-to-green
-  // gradient instead of just its red/orange leading edge. Measured once
-  // the track is actually laid out, and re-measured on resize.
   function syncStrengthGradientWidth(){
     const w = strengthTrack.getBoundingClientRect().width;
     if(w > 0) strengthFill.style.backgroundSize = `${w}px 100%`;
@@ -3292,8 +3128,7 @@ function buildDynamicLeaf(node, tools, alwaysOpen){
   formStep.appendChild(genErr);
   formStep.appendChild(generateBtn);
 
-  // clarify step: shown only when we genuinely can't tell what kind of task
-  // this is — never guess silently, always either match confidently or ask.
+  // clarify step
   const clarifyStep = document.createElement('div');
   clarifyStep.className = 'prompt-form';
   clarifyStep.style.display = 'none';
@@ -3327,20 +3162,13 @@ function buildDynamicLeaf(node, tools, alwaysOpen){
   clarifyStep.appendChild(clarifyGrid);
   clarifyStep.appendChild(clarifyBackBtn);
 
-  // follow-up step: a couple of type-specific questions to sharpen the
-  // prompt, shown once we know the type (from classifyText or the clarify
-  // step) but before we actually build anything. Rebuilt fresh each time
-  // since the type varies — unlike the fixed-category leaves, it isn't
-  // known until runtime here.
+  // follow-up step
   const followupStep = document.createElement('div');
   followupStep.className = 'prompt-form';
   followupStep.style.display = 'none';
 
   function goToFollowupOrFinish(type){
     const questions = FOLLOWUP_QUESTIONS[type] || [];
-    // Once the strength meter is green, the context box has already covered
-    // background/audience and tone/length — asking these again is redundant,
-    // so skip straight to building the prompt.
     if(questions.length === 0 || promptStrength().level === 'strong'){
       finishGeneration(type, []);
       return;
@@ -3352,11 +3180,6 @@ function buildDynamicLeaf(node, tools, alwaysOpen){
     fLabel.textContent = 'A couple quick questions to sharpen the prompt:';
     followupStep.appendChild(fLabel);
 
-    // The "topic" question (what this is actually about) is required, not
-    // optional — a description like "Friday blog post about the week" names
-    // a format but supplies no real subject matter, and without one, the
-    // final prompt is just a generic template Claude/ChatGPT/etc. has to
-    // guess its way through.
     const followupInputs = [];
     let topicEntry = null;
     const topicErr = document.createElement('p');
@@ -3412,7 +3235,7 @@ function buildDynamicLeaf(node, tools, alwaysOpen){
     followupStep.style.display = 'block';
   }
 
-  // result: recommendation card + prompt, filled in once they submit
+  // result
   const resultStep = document.createElement('div');
   resultStep.className = 'prompt-result';
   resultStep.style.display = 'none';
@@ -3446,11 +3269,6 @@ function buildDynamicLeaf(node, tools, alwaysOpen){
   openToolBtn.style.display = 'none';
   openToolBtn.addEventListener('click', () => {
     const promptText = outputArea.value;
-    // window.open must be called synchronously, in direct response to the
-    // click, or browsers treat it as a popup and silently block it (often
-    // showing an empty/blank tab instead of an error) — that's why this
-    // happens FIRST, before the clipboard write, which can safely happen
-    // async right after.
     window.open(buildToolLink(currentTool, promptText, currentType), '_blank', 'noopener,noreferrer');
     navigator.clipboard.writeText(promptText).catch(() => {
       try{ outputArea.focus(); outputArea.select(); document.execCommand('copy'); } catch(e2){ /* clipboard unavailable */ }
@@ -3471,9 +3289,6 @@ function buildDynamicLeaf(node, tools, alwaysOpen){
     if(alwaysOpen) intro.style.display = '';
   });
 
-  // Distinct from "Edit my answers" (which keeps what you typed) — this
-  // wipes everything and returns to a genuinely blank task box, for
-  // starting a completely new, unrelated task.
   const homeBtn = document.createElement('button');
   homeBtn.className = 'btn-ghost-mini';
   homeBtn.type = 'button';
@@ -3553,18 +3368,10 @@ function buildDynamicLeaf(node, tools, alwaysOpen){
     });
   }
 
-  // Everything after the type is known (either matched confidently from the
-  // description, or picked explicitly in the clarify step) funnels through
-  // here — so the tool + prompt are always built from a real type, never a
-  // silent guess.
   async function finishGeneration(type, followupInputs){
     followupInputs = followupInputs || [];
     const describe = describeInput.value.trim();
 
-    // In always-open (single-box) mode, pull the live tools/industry/role
-    // setup from the top of the page every time — someone can change their
-    // stack or industry without reloading, and it should immediately affect
-    // both which tool gets recommended and how the prompt is framed.
     let effectiveTools = tools;
     let setupIndustry = '';
     let setupRoles = [];
@@ -3630,9 +3437,6 @@ function buildDynamicLeaf(node, tools, alwaysOpen){
       tool
     });
 
-    // Show the result screen right away with a placeholder while Claude
-    // writes the tailored version — the local template is only a fallback
-    // now, never shown as the "real" answer unless the AI call fails.
     outputArea.value = 'Writing your tailored prompt…';
     outputArea.rows = 3;
     copyBtn.disabled = true;
@@ -3643,6 +3447,7 @@ function buildDynamicLeaf(node, tools, alwaysOpen){
     resultStep.style.display = 'flex';
     if(alwaysOpen) intro.style.display = 'none';
     hasGenerated = true;
+    if(window.__calaiTrial) window.__calaiTrial.recordUse();
 
     const enhanced = await enhancePromptViaAI({
       describe, context: combinedContext, type, tool,
@@ -3657,32 +3462,15 @@ function buildDynamicLeaf(node, tools, alwaysOpen){
       enhanceNote.style.display = 'block';
     }
 
-    // Auto-save every generated prompt to the library so it can be found
-    // and re-read later — no extra action required from the user.
     addLibraryEntry({ describe, tool, type, prompt: finalText });
   }
 
-  // Cheap "is this real content or just padding" check — unique words
-  // divided by total words. Repeated filler like "blah blah, blahblah
-  // blah, blahblah blah" racks up word count fast but only ever uses one
-  // or two distinct words, so its ratio stays low; an actual sentence
-  // doesn't, since function words (a, the, for, about...) are each
-  // different words even though they're short. Too-short strings aren't
-  // penalized — there isn't enough text yet to judge either way.
   function lexicalDiversity(text){
     const words = (text || '').toLowerCase().trim().split(/\s+/).filter(Boolean).map(w => w.replace(/[^a-z0-9']/g, '')).filter(Boolean);
     if(words.length < 2) return 1;
     return new Set(words).size / words.length;
   }
 
-  // Red until there's a full sentence or two describing the task, or the
-  // text is mostly repeated words rather than real content. Yellow as
-  // detail builds. Green ("strong") once there's real detail overall — a
-  // thoroughly packed, non-repetitive description, or tone/length covered
-  // — but that green bar doesn't fill all the way. It only goes to
-  // "perfect" (full bar) once audience/background is covered too, on top
-  // of everything else — and that credit now requires an actual
-  // audience-related word, not just two words typed into the context box.
   function promptStrength(){
     const describeWords = countWords(describeInput.value);
     const contextWords = countWords(contextInput.value);
@@ -3724,6 +3512,10 @@ function buildDynamicLeaf(node, tools, alwaysOpen){
   updateStrengthMeter();
 
   generateBtn.addEventListener('click', async () => {
+    if(window.__calaiTrial && !window.__calaiTrial.canGenerate()){
+      window.__calaiTrial.openPaywall();
+      return;
+    }
     const describe = describeInput.value.trim();
     if(!describe){
       genErr.textContent = 'Tell us what you need first — even a sentence works.';
@@ -3743,14 +3535,6 @@ function buildDynamicLeaf(node, tools, alwaysOpen){
     generateBtn.disabled = true;
     generateBtn.textContent = 'Thinking…';
 
-    // Local keyword rules run FIRST, not the AI webhook. The webhook lives on
-    // Make.com and has its own hardcoded idea of what the valid task types
-    // are — it doesn't know about types added here (like "slides") until
-    // that scenario is edited separately, so trusting it first can silently
-    // override a category that was just added or fixed in this file. Local
-    // rules are instant, free, and always in sync with this file, so they
-    // get first say; the AI webhook is only consulted when local rules
-    // genuinely can't tell (score 0 across every type).
     let guessedType = classifyText(describe);
 
     if(!guessedType){
@@ -3770,7 +3554,6 @@ function buildDynamicLeaf(node, tools, alwaysOpen){
       return;
     }
 
-    // No confident match from AI or local rules — don't guess. Ask instead.
     formStep.style.display = 'none';
     clarifyStep.style.display = 'block';
   });
@@ -3804,16 +3587,10 @@ function startOver(){
   hideError();
 }
 
-// Runs last so every element/function above already exists. Restoring a
-// returning team's selections happens first — applyClientConfig() below
-// will override any of it that CLIENT_CONFIG explicitly sets.
+// Runs last so every element/function above already exists.
 restoreFormState();
 applyClientConfig();
 
-// The whole app is now a single always-open task box — no tool/industry/role
-// wizard and no category tree to browse first. Recommendations are made
-// against every major tool by default since we no longer ask the user which
-// ones they have access to.
 const DEFAULT_TOOLS = ["Claude", "ChatGPT", "Microsoft Copilot", "Perplexity", "Gemini"];
 const taskBoxMount = document.getElementById('task-box-mount');
 if(taskBoxMount){
@@ -3836,8 +3613,6 @@ function closeSetupModal(){
 const setupEditBtn = document.getElementById('setup-edit-btn');
 if(setupEditBtn) setupEditBtn.addEventListener('click', openSetupModal);
 
-// It now lives as a plain link below the whole card (not inside it), so
-// there's nothing to move — just reveal it once the task box is live.
 if(setupEditBtn) setupEditBtn.style.display = '';
 
 const setupModalSkip = document.getElementById('setup-modal-skip');
@@ -3856,14 +3631,12 @@ if(setupModalContinue) setupModalContinue.addEventListener('click', () => {
   closeSetupModal();
 });
 
-// Pop it open right away on a first visit; once dismissed (either finished
-// or skipped) it stays closed on every future visit unless reopened via
-// the "Edit" link on the main page.
 let setupAlreadyDismissed = false;
 try{ setupAlreadyDismissed = localStorage.getItem(SETUP_DISMISSED_KEY) === '1'; } catch(e){ /* ignore */ }
 if(!setupAlreadyDismissed){
   openSetupModal();
 }
+
 </script>
 </body>
 </html>
