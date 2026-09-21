@@ -621,6 +621,37 @@
   .trial-pill b{color:var(--teal-glow);}
   .trial-pill.trial-pill-out{background:rgba(225,29,72,.08);border-color:rgba(225,29,72,.32);}
 
+  /* Quick / Guided mode toggle + guided fields */
+  .mode-toggle{
+    display:inline-flex;
+    gap:2px;
+    padding:3px;
+    border-radius:999px;
+    background:var(--surface);
+    border:1px solid var(--surface-border);
+    margin:0 0 18px;
+  }
+  .mode-tab{
+    border:none;
+    background:none;
+    color:var(--text-2);
+    font-family:inherit;
+    font-size:13px;
+    font-weight:600;
+    padding:7px 18px;
+    border-radius:999px;
+    cursor:pointer;
+    transition:background .18s ease, color .18s ease;
+  }
+  .mode-tab.active{
+    background:linear-gradient(135deg, var(--teal-1), var(--teal-2));
+    color:#fff;
+  }
+  .guided-panel{display:flex;flex-direction:column;gap:4px;}
+  .guided-panel .field-label{margin-top:12px;}
+  .guided-panel .field-label:first-of-type{margin-top:0;}
+  .guided-hint{margin:0 0 6px;font-size:12.5px;color:var(--text-2);line-height:1.5;}
+
   /* tree */
   #tree-section{display:none;}
   .tree-header{
@@ -1094,8 +1125,8 @@
     </div>
     <h1 id="access-gate-title">Unlock unlimited access</h1>
     <p id="access-gate-sub">Get unlimited tool matches and ready-to-use prompts — one time, yours forever.</p>
-    <a href="https://calaisolutions.gumroad.com/l/rccjm" class="btn-primary access-gate-buy">Get unlimited — $29 →</a>
-    <p class="access-gate-guarantee">One-time purchase · 30-day money-back guarantee</p>
+    <a href="https://calaisolutions.gumroad.com" class="btn-primary access-gate-buy">Get unlimited — $15/mo →</a><!-- TODO: replace this href with your $15/mo Solo product URL once created in Gumroad -->
+    <p class="access-gate-guarantee">Cancel anytime · 30-day money-back guarantee</p>
     <div class="access-gate-or"><span>Already bought?</span></div>
     <form id="access-gate-form">
       <input type="text" id="access-gate-input" placeholder="Enter your license key" autocomplete="off">
@@ -1368,7 +1399,7 @@ const CLIENT_CONFIG = {
       pillEl.innerHTML = `<b>${left}</b> free ${left === 1 ? 'prompt' : 'prompts'} left · <span style="text-decoration:underline;">Unlock unlimited</span>`;
     } else {
       pillEl.className = 'trial-pill trial-pill-out';
-      pillEl.innerHTML = `Free prompts used · <span style="text-decoration:underline;">Get unlimited — $29</span>`;
+      pillEl.innerHTML = `Free prompts used · <span style="text-decoration:underline;">Get unlimited — $15/mo</span>`;
     }
   }
 
@@ -3117,13 +3148,65 @@ function buildDynamicLeaf(node, tools, alwaysOpen){
     'Background, files, a link, or tone/length — all optional'
   );
 
+  // --- Quick vs Guided mode (paint-by-numbers, best-practice prompting) ---
+  let guidedMode = false;
+  const modeToggle = document.createElement('div');
+  modeToggle.className = 'mode-toggle';
+  const quickTab = document.createElement('button');
+  quickTab.type = 'button'; quickTab.className = 'mode-tab active'; quickTab.textContent = 'Quick';
+  const guidedTab = document.createElement('button');
+  guidedTab.type = 'button'; guidedTab.className = 'mode-tab'; guidedTab.textContent = 'Guided';
+  modeToggle.appendChild(quickTab);
+  modeToggle.appendChild(guidedTab);
+
+  function makeGuidedField(labelText, placeholder){
+    const l = document.createElement('label');
+    l.className = 'field-label';
+    l.textContent = labelText;
+    const i = document.createElement('input');
+    i.type = 'text';
+    i.className = 'prompt-input';
+    i.placeholder = placeholder;
+    return { label: l, input: i };
+  }
+  const gRole = makeGuidedField('Act as a…', 'e.g. senior marketing copywriter');
+  const gTask = makeGuidedField('I need you to…', 'e.g. write a product launch email');
+  const gDetails = makeGuidedField('Details it should know', 'e.g. audience, product, key points to include');
+  const gFormat = makeGuidedField('Format', 'e.g. ~200 words, friendly, 3 short paragraphs');
+  const guidedPanel = document.createElement('div');
+  guidedPanel.className = 'guided-panel';
+  guidedPanel.style.display = 'none';
+  const guidedHint = document.createElement('p');
+  guidedHint.className = 'guided-hint';
+  guidedHint.textContent = 'Fill the pieces in — we assemble a best-practice prompt from them. Only "I need you to…" is required.';
+  guidedPanel.appendChild(guidedHint);
+  [gRole, gTask, gDetails, gFormat].forEach(f => { guidedPanel.appendChild(f.label); guidedPanel.appendChild(f.input); });
+
   const describeWrap = document.createElement('div');
   describeWrap.className = 'describe-input-wrap';
   describeWrap.appendChild(describeInput);
   if(describeMicBtn) describeWrap.appendChild(describeMicBtn);
-  formStep.appendChild(describeLabel);
-  formStep.appendChild(describeWrap);
-  formStep.appendChild(strengthMeter);
+
+  // Group the Quick-mode inputs so the toggle can show/hide them together.
+  const quickGroup = document.createElement('div');
+  quickGroup.appendChild(describeLabel);
+  quickGroup.appendChild(describeWrap);
+  quickGroup.appendChild(strengthMeter);
+
+  function setMode(guided){
+    guidedMode = guided;
+    quickTab.classList.toggle('active', !guided);
+    guidedTab.classList.toggle('active', guided);
+    quickGroup.style.display = guided ? 'none' : 'block';
+    guidedPanel.style.display = guided ? 'block' : 'none';
+    genErr.style.display = 'none';
+  }
+  quickTab.addEventListener('click', () => setMode(false));
+  guidedTab.addEventListener('click', () => setMode(true));
+
+  formStep.appendChild(modeToggle);
+  formStep.appendChild(quickGroup);
+  formStep.appendChild(guidedPanel);
   formStep.appendChild(optionalDetails);
   formStep.appendChild(genErr);
   formStep.appendChild(generateBtn);
@@ -3516,14 +3599,29 @@ function buildDynamicLeaf(node, tools, alwaysOpen){
       window.__calaiTrial.openPaywall();
       return;
     }
+    if(guidedMode){
+      const task = gTask.input.value.trim();
+      if(!task){
+        genErr.textContent = 'Fill in "I need you to…" so we know the task.';
+        genErr.style.display = 'block';
+        gTask.input.focus();
+        return;
+      }
+      const roleV = gRole.input.value.trim();
+      describeInput.value = roleV ? `Act as ${roleV}. ${task}` : task;
+      const detailsV = gDetails.input.value.trim();
+      contextInput.value = [contextInput.value.trim(), detailsV].filter(Boolean).join('\n\n');
+      const formatV = gFormat.input.value.trim();
+      if(formatV) toneInput.value = formatV;
+    }
     const describe = describeInput.value.trim();
     if(!describe){
       genErr.textContent = 'Tell us what you need first — even a sentence works.';
       genErr.style.display = 'block';
-      describeInput.focus();
+      if(!guidedMode) describeInput.focus();
       return;
     }
-    if(promptStrength().level === 'weak'){
+    if(!guidedMode && promptStrength().level === 'weak'){
       genErr.textContent = "That's a bit thin to build a strong prompt from — add a few more words above (the strength bar turns yellow, then green, as you add detail).";
       genErr.style.display = 'block';
       describeInput.focus();
