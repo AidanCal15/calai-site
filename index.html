@@ -3,19 +3,19 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>CalAI — AI Stack Navigator & Prompt Builder</title>
-<meta name="description" content="Tell CalAI what you're trying to do and it picks the right AI tool — Claude, ChatGPT, Copilot, Perplexity, or Gemini — and writes the prompt for you. No account, no sign-up, no API key.">
+<title>CalSolutions — AI Stack Navigator & Prompt Builder</title>
+<meta name="description" content="Tell CalSolutions what you're trying to do and it picks the right AI tool — Claude, ChatGPT, Copilot, Perplexity, or Gemini — and writes the prompt for you. No account, no sign-up, no API key.">
 <link rel="canonical" href="https://calaisolutions.cloud/">
-<meta name="google-site-verification" content="Fr5XTq-nq2f82CCKoJC4ApzreoTLg6Nfgi83v2uXGB8" />
+
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="CalAI">
+<meta property="og:site_name" content="CalSolutions">
 <meta property="og:url" content="https://calaisolutions.cloud/">
-<meta property="og:title" content="CalAI — Stop guessing which AI tool to use">
+<meta property="og:title" content="CalSolutions — Stop guessing which AI tool to use">
 <meta property="og:description" content="One click turns 'what do I even type?' into the right AI tool for the task, plus a ready-to-use prompt written for you. No account, no sign-up, no API key.">
 <meta property="og:image" content="https://calaisolutions.cloud/og-image.png">
 
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="CalAI — Stop guessing which AI tool to use">
+<meta name="twitter:title" content="CalSolutions — Stop guessing which AI tool to use">
 <meta name="twitter:description" content="Tells you which AI tool to use and writes the prompt for you. No account, no sign-up, no API key.">
 <meta name="twitter:image" content="https://calaisolutions.cloud/og-image.png">
 
@@ -36,14 +36,13 @@
 {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
-  "name": "CalAI",
+  "name": "CalSolutions",
   "applicationCategory": "BusinessApplication",
   "operatingSystem": "Web",
   "description": "AI Stack Navigator & Prompt Builder — recommends the right AI tool for a task and writes an optimized, ready-to-use prompt for it.",
   "offers": [
-    { "@type": "Offer", "price": "15", "priceCurrency": "USD", "name": "Solo — monthly" },
-    { "@type": "Offer", "price": "249", "priceCurrency": "USD", "name": "Team — up to 15 people (monthly)" },
-    { "@type": "Offer", "price": "499", "priceCurrency": "USD", "name": "Business — up to 40 people (monthly)" }
+    { "@type": "Offer", "price": "20", "priceCurrency": "USD", "name": "One-time purchase" },
+    { "@type": "Offer", "price": "15", "priceCurrency": "USD", "name": "Monthly subscription" }
   ]
 }
 </script>
@@ -117,11 +116,11 @@
         <path d="M62 23c-15 0-15 13.5 0 13.5S77 50 62 50H38c-15 0-15 13.5 0 13.5S53 77 38 77" fill="none" stroke="currentColor" stroke-width="10" stroke-linecap="round" class="text-violet-500"/>
         <path d="M38 23c15 0 15 13.5 0 13.5S23 50 38 50h24c15 0 15 13.5 0 13.5S47 77 62 77" fill="none" stroke="currentColor" stroke-width="10" stroke-linecap="round" opacity=".5" class="text-pink-500"/>
       </svg>
-      <span class="font-semibold tracking-tight">Cal<span class="font-extrabold">AI</span></span>
+      <span class="font-semibold tracking-tight">Cal<span class="font-extrabold">Solutions</span></span>
     </div>
     <div class="flex items-center gap-3">
-      <a href="/app.html#unlock" class="hidden sm:inline-flex text-sm font-semibold px-4 py-2 rounded-full border border-gray-300 dark:border-white/15 hover:bg-gray-100 dark:hover:bg-white/10">Already have a key?</a>
-      <a href="/app.html" class="hidden sm:inline-flex btn-buy text-white text-sm font-semibold px-4 py-2 rounded-full cursor-pointer">Start free</a>
+      <a href="/app.html" class="hidden sm:inline-flex text-sm font-semibold px-4 py-2 rounded-full border border-gray-300 dark:border-white/15 hover:bg-gray-100 dark:hover:bg-white/10">Already have a key?</a>
+      <a href="https://calaisolutions.gumroad.com/l/rccjm" class="hidden sm:inline-flex btn-buy text-white text-sm font-semibold px-4 py-2 rounded-full cursor-pointer">Get access</a>
       <button id="theme-toggle" type="button" aria-label="Toggle dark mode" class="w-9 h-9 inline-flex items-center justify-center rounded-full border border-gray-300 dark:border-white/15 hover:bg-gray-100 dark:hover:bg-white/10">
         <svg id="theme-icon-sun" class="w-4 h-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
         <svg id="theme-icon-moon" class="w-4 h-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z"/></svg>
@@ -192,33 +191,34 @@
     <div class="mt-12 grid sm:grid-cols-2 gap-5 max-w-2xl mx-auto text-left">
 
       <div class="card-hover rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-card p-6 flex flex-col h-full">
-        <h3 class="font-semibold text-lg mb-1">Solo</h3>
-        <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">For one person who wants every AI task done right.</p>
-        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4"><span class="text-2xl font-bold text-gray-900 dark:text-white">$15</span>/mo <span class="text-gray-400">· or $150/yr</span></p>
+        <h3 class="font-semibold text-lg mb-1">Just for me</h3>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Your own AI playbook, ready in two minutes.</p>
         <div class="mt-auto">
-          <a href="/app.html" class="btn-buy text-white font-semibold text-sm px-6 py-3 rounded-full shadow-lg cursor-pointer inline-flex w-full items-center justify-center">
-            Start free →
+          <a href="https://calaisolutions.gumroad.com/l/rccjm" class="btn-buy text-white font-semibold text-sm px-6 py-3 rounded-full shadow-lg cursor-pointer inline-flex w-full items-center justify-center">
+            Get instant access — $20
           </a>
-          <div class="mt-3 text-center min-h-[2.75rem] flex items-center justify-center">
-            <span class="text-xs text-gray-500 dark:text-gray-400">3 free prompts, no card · then $15/mo · cancel anytime</span>
+          <div class="mt-3 text-center">
+            <a href="https://calaisolutions.gumroad.com/l/wqaagr" class="text-sm font-medium underline text-gray-600 dark:text-gray-400 cursor-pointer">
+              or $15/month
+            </a>
           </div>
         </div>
       </div>
 
       <div class="card-hover rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-card p-6 flex flex-col h-full">
-        <h3 class="font-semibold text-lg mb-1">For your team</h3>
-        <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">Your whole team performing like your best AI user — rolled out with one link.</p>
+        <h3 class="font-semibold text-lg mb-1">For my team</h3>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">One link. Your whole team, adopting AI the same way.</p>
         <ul class="text-sm text-gray-600 dark:text-gray-400 mb-4 space-y-1">
-          <li><span class="font-semibold text-gray-900 dark:text-white">$249/mo</span> or <span class="font-semibold text-gray-900 dark:text-white">$2,490/yr</span> — up to 15 people</li>
-          <li><span class="font-semibold text-gray-900 dark:text-white">$499/mo</span> or <span class="font-semibold text-gray-900 dark:text-white">$4,990/yr</span> — up to 40 people</li>
-          <li>Bigger team? <a href="mailto:info@calaisolutions.com?subject=CalAI%20Enterprise" class="font-semibold text-violet-600 dark:text-violet-300 underline">Let's talk.</a></li>
+          <li><span class="font-semibold text-gray-900 dark:text-white">$99/mo</span> — up to 15 people</li>
+          <li><span class="font-semibold text-gray-900 dark:text-white">$199/mo</span> — up to 40 people</li>
+          <li>Bigger team? <span class="font-semibold text-gray-900 dark:text-white">Let's talk.</span></li>
         </ul>
         <div class="mt-auto">
-          <a href="https://calaisolutions.gumroad.com/l/zlfddm" class="btn-buy text-white font-semibold text-sm px-6 py-3 rounded-full shadow-lg cursor-pointer inline-flex w-full items-center justify-center">
+          <a href="mailto:info@calaisolutions.com?subject=Team%20plan%20for%20CalSolutions" class="btn-buy text-white font-semibold text-sm px-6 py-3 rounded-full shadow-lg cursor-pointer inline-flex w-full items-center justify-center">
             Set up my team →
           </a>
-          <div class="mt-3 text-center min-h-[2.75rem] flex items-center justify-center">
-            <span class="text-xs text-gray-500 dark:text-gray-400">No accounts, no per-person setup · <a href="mailto:info@calaisolutions.com?subject=CalAI%20team%20demo" class="underline">book a 15-min demo</a></span>
+          <div class="mt-3 text-center">
+            <span class="text-sm text-gray-500 dark:text-gray-400">No accounts, no per-person setup</span>
           </div>
         </div>
       </div>
@@ -226,7 +226,7 @@
     </div>
 
     <p class="mt-5 text-sm text-gray-500 dark:text-gray-400 text-center">
-      Already purchased? <a href="/app.html#unlock" class="text-violet-600 dark:text-violet-300 underline font-medium">Enter your license key →</a>
+      Already purchased? <a href="/app.html" class="text-violet-600 dark:text-violet-300 underline font-medium">Enter your license key →</a>
     </p>
 
     <div class="mt-8 flex flex-wrap items-center justify-center gap-2.5">
@@ -268,7 +268,7 @@
           Do I need to create an account?
           <svg class="w-4 h-4 shrink-0 transition-transform group-open:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
         </summary>
-        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">No sign-up, no password, no account to manage. Try it free right in your browser; if you subscribe, you get a license key by email that unlocks it on any browser.</p>
+        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">No. After purchase you get a license key by email — no sign-up, no password, no account to manage.</p>
       </details>
 
       <details class="group rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-card p-4 open:pb-4">
@@ -281,15 +281,15 @@
 
       <details class="group rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-card p-4 open:pb-4">
         <summary class="flex items-center justify-between cursor-pointer font-medium list-none">
-          How much does it cost?
+          How do I get access after I buy?
           <svg class="w-4 h-4 shrink-0 transition-transform group-open:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
         </summary>
-        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">Start free — your first 3 prompts need no card. After that, Solo is $15/mo, and team plans start at $249/mo for up to 15 people. Cancel anytime.</p>
+        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">You'll get an email with a license key right after checkout. Enter it once on the site and you're in — it stays remembered on that browser.</p>
       </details>
 
       <details class="group rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-card p-4 open:pb-4">
         <summary class="flex items-center justify-between cursor-pointer font-medium list-none">
-          What if I have questions before subscribing?
+          What if I have questions before buying?
           <svg class="w-4 h-4 shrink-0 transition-transform group-open:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
         </summary>
         <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">Email <a href="mailto:info@calaisolutions.com" class="text-violet-600 dark:text-violet-300 underline">info@calaisolutions.com</a> and we'll get back to you.</p>
@@ -301,17 +301,16 @@
   <section class="relative overflow-hidden" aria-labelledby="cta-heading">
     <div class="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-br from-violet-600 to-pink-600" aria-hidden="true"></div>
     <div class="max-w-3xl mx-auto px-5 py-16 text-center text-white">
-      <h2 id="cta-heading" class="text-2xl sm:text-3xl font-bold">Try it free — no card, no sign-up</h2>
-      <p class="mt-3 text-white/85">Get your first 3 prompts free. If it clicks, plans start at $15/mo.</p>
+      <h2 id="cta-heading" class="text-2xl sm:text-3xl font-bold">Get your AI playbook today</h2>
+      <p class="mt-3 text-white/85">Buy once, or pay monthly. Instant access. No account required.</p>
       <div class="mt-7 flex flex-col sm:flex-row items-center justify-center gap-4">
-        <a href="/app.html" class="inline-flex bg-white text-violet-700 font-semibold text-base px-7 py-3.5 rounded-full shadow-lg hover:-translate-y-0.5 transition-transform cursor-pointer">
-          Start free →
+        <a href="https://calaisolutions.gumroad.com/l/rccjm" class="inline-flex bg-white text-violet-700 font-semibold text-base px-7 py-3.5 rounded-full shadow-lg hover:-translate-y-0.5 transition-transform cursor-pointer">
+          Get instant access — $20
         </a>
-        <a href="https://calaisolutions.gumroad.com/l/zlfddm" class="inline-flex text-white font-semibold text-base px-7 py-3.5 rounded-full border border-white/40 hover:bg-white/10 cursor-pointer">
-          Set up your team →
+        <a href="https://calaisolutions.gumroad.com/l/wqaagr" class="inline-flex text-white font-semibold text-base px-7 py-3.5 rounded-full border border-white/40 hover:bg-white/10 cursor-pointer">
+          $15/month
         </a>
       </div>
-      <p class="mt-4 text-sm text-white/75">Cancel anytime · 30-day money-back guarantee</p>
     </div>
   </section>
 
@@ -334,7 +333,7 @@
       }
     }
     var stored = null;
-    try { stored = localStorage.getItem('calai-landing-theme'); } catch (e) {}
+    try { stored = localStorage.getItem('calsolutions-landing-theme'); } catch (e) {}
     var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
     applyTheme(stored ? stored === 'dark' : prefersDark);
 
@@ -343,7 +342,7 @@
       toggle.addEventListener('click', function () {
         var isDark = !root.classList.contains('dark');
         applyTheme(isDark);
-        try { localStorage.setItem('calai-landing-theme', isDark ? 'dark' : 'light'); } catch (e) {}
+        try { localStorage.setItem('calsolutions-landing-theme', isDark ? 'dark' : 'light'); } catch (e) {}
       });
     }
   })();
